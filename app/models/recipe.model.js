@@ -6,9 +6,9 @@ const Recipe = function(recipe) {
   this.username = recipe.username;
   this.title = recipe.title;
   this.servings = recipe.servings;
-  this.serving_size = recipe.servingSize; 
-  this.prep_time = recipe.prepTime;
-  this.cook_time = recipe.cookTime;
+  this.serving_size = recipe.serving_size; 
+  this.prep_time = recipe.prep_time;
+  this.cook_time = recipe.cook_time;
 };
 
 Recipe.create = (newRecipe, result) => {
