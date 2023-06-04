@@ -29,7 +29,16 @@ exports.create = (req, res) => {
 
 // Retrieve all recipes from the database (with condition).
 exports.findAll = (req, res) => {
-  
+  const title = req.query.title;
+  Recipe.getAll(title, (err, data) => {
+    if (err) {
+      res.status(500).send({
+        message: err.message || "Some error occurred while retrieving recipes."
+      });
+    } else {
+      res.send(data);
+    }
+  });
 };
 
 // Find a single Recipe with a id

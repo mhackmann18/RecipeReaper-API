@@ -12,7 +12,7 @@ const Recipe = function(recipe) {
 };
 
 Recipe.create = (newRecipe, result) => {
-  sql.query("INSERT INTO Recipes SET ?", newRecipe, (err, res) => {
+  sql.query("INSERT INTO recipes SET ?", newRecipe, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -25,7 +25,7 @@ Recipe.create = (newRecipe, result) => {
 };
 
 Recipe.findById = (id, result) => {
-  sql.query(`SELECT * FROM Recipes WHERE id = ${id}`, (err, res) => {
+  sql.query(`SELECT * FROM recipes WHERE id = ${id}`, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -44,7 +44,7 @@ Recipe.findById = (id, result) => {
 };
 
 Recipe.getAll = (title, result) => {
-  let query = "SELECT * FROM Recipes";
+  let query = "SELECT * FROM recipes";
 
   if (title) {
     query += ` WHERE title LIKE '%${title}%'`;
@@ -57,7 +57,7 @@ Recipe.getAll = (title, result) => {
       return;
     }
 
-    console.log("Recipes: ", res);
+    console.log("recipes: ", res);
     result(null, res);
   });
 };
@@ -65,7 +65,7 @@ Recipe.getAll = (title, result) => {
 Recipe.updateById = (recipe, result) => {
 
   sql.query(
-    "UPDATE Recipes SET title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ? WHERE id = ?",
+    "UPDATE recipes SET title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ? WHERE id = ?",
     [recipe.title, recipe.servings, recipe.serving_size, recipe.prep_time, recipe.cook_time, recipe.id],
     (err, res) => {
       if (err) {
@@ -87,7 +87,7 @@ Recipe.updateById = (recipe, result) => {
 };
 
 Recipe.remove = (id, result) => {
-  sql.query("DELETE FROM Recipes WHERE id = ?", id, (err, res) => {
+  sql.query("DELETE FROM recipes WHERE id = ?", id, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(null, err);
