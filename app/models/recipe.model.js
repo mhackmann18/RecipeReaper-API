@@ -6,9 +6,9 @@ const Recipe = function(recipe) {
   this.username = recipe.username;
   this.title = recipe.title;
   this.servings = recipe.servings;
-  this.servingSize = recipe.servingSize;
-  this.prepTime = recipe.prepTime;
-  this.cookTime = recipe.cookTime;
+  this.serving_size = recipe.servingSize; 
+  this.prep_time = recipe.prepTime;
+  this.cook_time = recipe.cookTime;
 };
 
 Recipe.create = (newRecipe, result) => {
@@ -62,10 +62,11 @@ Recipe.getAll = (title, result) => {
   });
 };
 
-Recipe.updateById = (id, tutorial, result) => {
+Recipe.updateById = (recipe, result) => {
+
   sql.query(
-    "UPDATE Recipes SET title = ?, description = ?, published = ? WHERE id = ?",
-    [tutorial.title, tutorial.description, tutorial.published, id],
+    "UPDATE Recipes SET title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ? WHERE id = ?",
+    [recipe.title, recipe.servings, recipe.serving_size, recipe.prep_time, recipe.cook_time, recipe.id],
     (err, res) => {
       if (err) {
         console.log("error: ", err);
@@ -74,13 +75,13 @@ Recipe.updateById = (id, tutorial, result) => {
       }
 
       if (res.affectedRows == 0) {
-        // not found Tutorial with the id
+        // not found Recipe with the id
         result({ kind: "not_found" }, null);
         return;
       }
 
-      console.log("updated tutorial: ", { id: id, ...tutorial });
-      result(null, { id: id, ...tutorial });
+      console.log("updated tutorial: ", { ...recipe });
+      result(null, { ...recipe });
     }
   );
 };
@@ -99,20 +100,20 @@ Recipe.remove = (id, result) => {
       return;
     }
 
-    console.log("deleted tutorial with id: ", id);
+    console.log("deleted recipe with id: ", id);
     result(null, res);
   });
 };
 
 Recipe.removeAll = result => {
-  sql.query("DELETE FROM Recipes", (err, res) => {
+  sql.query("DELETE FROM recipes", (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(null, err);
       return;
     }
 
-    console.log(`deleted ${res.affectedRows} Recipes`);
+    console.log(`deleted ${res.affectedRows} recipes`);
     result(null, res);
   });
 };
