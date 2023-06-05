@@ -1,18 +1,18 @@
-const sql = require("./db.js");
+const sql = require("./db");
 
 // constructor
-const Recipe = function(recipe) {
+const Recipe = function (recipe) {
   this.id = recipe.id;
   this.username = recipe.username;
   this.title = recipe.title;
   this.servings = recipe.servings;
-  this.serving_size = recipe.serving_size; 
+  this.serving_size = recipe.serving_size;
   this.prep_time = recipe.prep_time;
   this.cook_time = recipe.cook_time;
 };
 
 Recipe.create = (newRecipe, result) => {
-  sql.query("INSERT INTO recipes SET ?", newRecipe, (err, res) => {
+  sql.query("INSERT INTO recipes SET ?", newRecipe, (err /* res */) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -63,10 +63,16 @@ Recipe.getAll = (title, result) => {
 };
 
 Recipe.updateById = (recipe, result) => {
-
   sql.query(
     "UPDATE recipes SET title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ? WHERE id = ?",
-    [recipe.title, recipe.servings, recipe.serving_size, recipe.prep_time, recipe.cook_time, recipe.id],
+    [
+      recipe.title,
+      recipe.servings,
+      recipe.serving_size,
+      recipe.prep_time,
+      recipe.cook_time,
+      recipe.id,
+    ],
     (err, res) => {
       if (err) {
         console.log("error: ", err);
@@ -74,7 +80,7 @@ Recipe.updateById = (recipe, result) => {
         return;
       }
 
-      if (res.affectedRows == 0) {
+      if (res.affectedRows === 0) {
         // not found Recipe with the id
         result({ kind: "not_found" }, null);
         return;
@@ -94,7 +100,7 @@ Recipe.remove = (id, result) => {
       return;
     }
 
-    if (res.affectedRows == 0) {
+    if (res.affectedRows === 0) {
       // not found Tutorial with the id
       result({ kind: "not_found" }, null);
       return;
@@ -105,7 +111,7 @@ Recipe.remove = (id, result) => {
   });
 };
 
-Recipe.removeAll = result => {
+Recipe.removeAll = (result) => {
   sql.query("DELETE FROM recipes", (err, res) => {
     if (err) {
       console.log("error: ", err);

@@ -5,8 +5,8 @@ const cors = require("cors");
 
 const app = express();
 
-var corsOptions = {
-  origin: "http://localhost:8081"
+const corsOptions = {
+  origin: "http://localhost:8081",
 };
 
 app.use(cors(corsOptions));
@@ -22,7 +22,7 @@ app.get("/", (req, res) => {
   res.json({ message: "Welcome to PrepMaster" });
 });
 
-require("./app/routes/recipe.routes.js")(app);
+require("./app/routes/recipe.routes")(app);
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
