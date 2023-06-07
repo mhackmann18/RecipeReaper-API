@@ -25,7 +25,7 @@ app.get("/", (req, res) => {
   res.json({ message: "Welcome to PrepMaster" });
 });
 
-require("./app/routes/recipe.routes")(app);
+require("./app/routes/recipe")(app);
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
