@@ -27,30 +27,36 @@ class Recipe {
   }
 
   static findById(id, result) {
-    connection.query(`SELECT * FROM recipes WHERE id = ${id}`, (err, res) => {
-      if (err) {
-        console.log("error: ", err);
-        result(err, null);
-        return;
-      }
+    connection.query(
+      `SELECT r.*, JSON_ARRAYAGG(JSON_OBJECT('id', i.id, 'name', i.name, 'unit', i.unit, 'quantity', i.quantity)) AS ingredients
+    FROM recipes AS r
+    LEFT JOIN ingredients AS i ON r.id = i.recipe_id
+    WHERE r.id = ${connection.escape(id)}
+    GROUP BY r.id`,
+      (err, res) => {
+        if (err) {
+          console.log("error: ", err);
+          result(err, null);
+          return;
+        }
 
-      if (res.length) {
-        console.log("found recipe: ", res[0]);
-        result(null, res[0]);
-        return;
-      }
+        if (res.length) {
+          console.log("found recipe: ", res[0]);
+          result(null, res[0]);
+          return;
+        }
 
-      // not found Tutorial with the id
-      result({ kind: "not_found" }, null);
-    });
+        // not found recipe with the id
+        result({ kind: "not_found" }, null);
+      }
+    );
   }
 
-  static getAll(title, result) {
-    let query = "SELECT * FROM recipes";
-
-    if (title) {
-      query += ` WHERE title LIKE '%${title}%'`;
-    }
+  static getAll(result) {
+    const query = `SELECT r.*, JSON_ARRAYAGG(JSON_OBJECT('id', i.id, 'name', i.name, 'unit', i.unit, 'quantity', i.quantity)) AS ingredients
+    FROM recipes AS r
+    LEFT JOIN ingredients AS i ON r.id = i.recipe_id
+    GROUP BY r.id`;
 
     connection.query(query, (err, res) => {
       if (err) {
@@ -60,6 +66,7 @@ class Recipe {
       }
 
       console.log("recipes: ", res);
+
       result(null, res);
     });
   }

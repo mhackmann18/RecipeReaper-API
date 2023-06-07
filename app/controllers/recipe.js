@@ -22,10 +22,9 @@ exports.create = (req, res) => {
   });
 };
 
-// Retrieve all recipes from the database (with condition).
+// Retrieve all recipes
 exports.findAll = (req, res) => {
-  const { title } = req.query;
-  recipeModel.getAll(title, (err, data) => {
+  recipeModel.getAll((err, data) => {
     if (err) {
       res.status(500).send({
         message: err.message || "Some error occurred while retrieving recipes.",
