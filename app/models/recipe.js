@@ -27,33 +27,48 @@ class Recipe {
   }
 
   static findById(id, result) {
-    connection.query(
-      `SELECT r.*, JSON_ARRAYAGG(JSON_OBJECT('id', i.id, 'name', i.name, 'unit', i.unit, 'quantity', i.quantity)) AS ingredients
+    const query = `SELECT r.*, JSON_ARRAYAGG(JSON_OBJECT('id', i.id, 'name', i.name, 'unit', i.unit, 'quantity', i.quantity)) AS ingredients,
+    (SELECT JSON_ARRAYAGG(JSON_OBJECT('text', instr.text, 'step', instr.step, 'id', instr.id))
+     FROM instructions AS instr
+     WHERE instr.recipe_id = r.id
+     GROUP BY instr.recipe_id) AS instructions,
+    (SELECT JSON_OBJECT('calories', n.calories, 'fat', n.fat, 'carbohydrate', n.carbohydrate)
+     FROM nutrients AS n
+     WHERE n.recipe_id = r.id
+     GROUP BY n.recipe_id) AS nutrients
     FROM recipes AS r
     LEFT JOIN ingredients AS i ON r.id = i.recipe_id
     WHERE r.id = ${connection.escape(id)}
-    GROUP BY r.id`,
-      (err, res) => {
-        if (err) {
-          console.log("error: ", err);
-          result(err, null);
-          return;
-        }
+    GROUP BY r.id`;
 
-        if (res.length) {
-          console.log("found recipe: ", res[0]);
-          result(null, res[0]);
-          return;
-        }
-
-        // not found recipe with the id
-        result({ kind: "not_found" }, null);
+    connection.query(query, (err, res) => {
+      if (err) {
+        console.log("error: ", err);
+        result(err, null);
+        return;
       }
-    );
+
+      if (res.length) {
+        console.log("found recipe: ", res[0]);
+        result(null, res[0]);
+        return;
+      }
+
+      // not found recipe with the id
+      result({ kind: "not_found" }, null);
+    });
   }
 
   static getAll(result) {
-    const query = `SELECT r.*, JSON_ARRAYAGG(JSON_OBJECT('id', i.id, 'name', i.name, 'unit', i.unit, 'quantity', i.quantity)) AS ingredients
+    const query = `SELECT r.*, JSON_ARRAYAGG(JSON_OBJECT('id', i.id, 'name', i.name, 'unit', i.unit, 'quantity', i.quantity)) AS ingredients,
+    (SELECT JSON_ARRAYAGG(JSON_OBJECT('text', instr.text, 'step', instr.step, 'id', instr.id))
+     FROM instructions AS instr
+     WHERE instr.recipe_id = r.id
+     GROUP BY instr.recipe_id) AS instructions,
+    (SELECT JSON_OBJECT('calories', n.calories, 'fat', n.fat, 'carbohydrate', n.carbohydrate)
+     FROM nutrients AS n
+     WHERE n.recipe_id = r.id
+     GROUP BY n.recipe_id) AS nutrients
     FROM recipes AS r
     LEFT JOIN ingredients AS i ON r.id = i.recipe_id
     GROUP BY r.id`;
