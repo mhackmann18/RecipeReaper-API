@@ -222,16 +222,19 @@ class Recipe {
   }
 
   static removeAll(result) {
-    connection.query("DELETE FROM recipes", (err, res) => {
-      if (err) {
-        console.log("error: ", err);
-        result(null, err);
-        return;
-      }
+    connection.query(
+      "DELETE FROM ingredients; DELETE FROM instructions; DELETE FROM nutrients; DELETE FROM recipes;",
+      (err, res) => {
+        if (err) {
+          console.log("error: ", err);
+          result(null, err);
+          return;
+        }
 
-      console.log(`deleted ${res.affectedRows} recipes`);
-      result(null, res);
-    });
+        console.log(`deleted ${res.affectedRows} recipes`);
+        result(null, res);
+      }
+    );
   }
 }
 
