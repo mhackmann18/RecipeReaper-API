@@ -1,3 +1,5 @@
+/* eslint-disable no-shadow */
+/* eslint-disable consistent-return */
 const connection = require("./db");
 
 class Recipe {
@@ -25,6 +27,35 @@ class Recipe {
       result(null, newRecipe);
     });
   }
+
+  // static create(newRecipe, result) {
+  //   const sql =
+  //     "INSERT INTO recipes SET id = ?, username = ?, title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ?";
+
+  //   const values = [
+  //     newRecipe.id,
+  //     newRecipe.username,
+  //     newRecipe.title,
+  //     newRecipe.servings,
+  //     newRecipe.serving_size,
+  //     newRecipe.prep_time,
+  //     newRecipe.cook_time,
+  //   ];
+
+  //   connection.beginTransaction(()=>{
+  //     connection.query
+  //   })
+
+  //   connection.query(sql, values, (err /* res */) => {
+  //     if (err) {
+  //       console.log("error: ", err.sqlMessage);
+  //       result(err, null);
+  //       return;
+  //     }
+
+  //     result(null, newRecipe);
+  //   });
+  // }
 
   static findById(id, result) {
     const query = `SELECT r.*, 
@@ -124,22 +155,69 @@ class Recipe {
     );
   }
 
+  // static remove(id, result) {
+  //   connection.query("DELETE FROM recipes WHERE id = ?", id, (err, res) => {
+  //     if (err) {
+  //       console.log("error: ", err);
+  //       result(null, err);
+  //       return;
+  //     }
+
+  //     if (res.affectedRows === 0) {
+  //       // not found recipe with the id
+  //       result({ kind: "not_found" }, null);
+  //       return;
+  //     }
+
+  //     console.log("deleted recipe with id: ", id);
+  //     result(null, res);
+  //   });
+  // }
+
   static remove(id, result) {
-    connection.query("DELETE FROM recipes WHERE id = ?", id, (err, res) => {
-      if (err) {
-        console.log("error: ", err);
-        result(null, err);
-        return;
-      }
+    connection.beginTransaction(() => {
+      const queries = `DELETE FROM ingredients WHERE recipe_id = ?; 
+      DELETE FROM instructions WHERE recipe_id = ?;
+      DELETE FROM nutrients WHERE recipe_id = ?;`;
 
-      if (res.affectedRows === 0) {
-        // not found Tutorial with the id
-        result({ kind: "not_found" }, null);
-        return;
-      }
+      connection.query(queries, [id, id, id], (error /* res */) => {
+        if (error) {
+          return connection.rollback(() => {
+            console.log("error: ", error);
+            result(null, error);
+          });
+        }
 
-      console.log("deleted recipe with id: ", id);
-      result(null, res);
+        const query = "DELETE FROM recipes WHERE id = ?";
+        connection.query(query, id, (error, res) => {
+          if (error) {
+            return connection.rollback(() => {
+              console.log("error: ", error);
+              result(null, error);
+            });
+          }
+
+          if (res.affectedRows === 0) {
+            // not found recipe with the id
+            return connection.rollback(() => {
+              console.log("error: recipe doesn't exist");
+              result({ kind: "not_found" }, null);
+            });
+          }
+
+          connection.commit((error) => {
+            if (error) {
+              return connection.rollback(() => {
+                console.log("error: ", error);
+                result(null, error);
+              });
+            }
+
+            console.log("deleted recipe with id: ", id);
+            result(null, res);
+          });
+        });
+      });
     });
   }
 
