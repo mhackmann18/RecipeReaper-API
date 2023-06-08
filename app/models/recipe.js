@@ -27,15 +27,19 @@ class Recipe {
   }
 
   static findById(id, result) {
-    const query = `SELECT r.*, JSON_ARRAYAGG(JSON_OBJECT('id', i.id, 'name', i.name, 'unit', i.unit, 'quantity', i.quantity)) AS ingredients,
+    const query = `SELECT r.*, 
+    (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', i.id, 'name', i.name, 'unit', i.unit, 'quantity', i.quantity))
+      FROM ingredients AS i
+      WHERE i.recipe_id = r.id
+      GROUP BY i.recipe_id) AS ingredients,
     (SELECT JSON_ARRAYAGG(JSON_OBJECT('text', instr.text, 'step', instr.step, 'id', instr.id))
-     FROM instructions AS instr
-     WHERE instr.recipe_id = r.id
-     GROUP BY instr.recipe_id) AS instructions,
+      FROM instructions AS instr
+      WHERE instr.recipe_id = r.id
+      GROUP BY instr.recipe_id) AS instructions,
     (SELECT JSON_OBJECT('calories', n.calories, 'fat', n.fat, 'carbohydrate', n.carbohydrate)
-     FROM nutrients AS n
-     WHERE n.recipe_id = r.id
-     GROUP BY n.recipe_id) AS nutrients
+      FROM nutrients AS n
+      WHERE n.recipe_id = r.id
+      GROUP BY n.recipe_id) AS nutrients
     FROM recipes AS r
     LEFT JOIN ingredients AS i ON r.id = i.recipe_id
     WHERE r.id = ${connection.escape(id)}
@@ -60,15 +64,19 @@ class Recipe {
   }
 
   static getAll(result) {
-    const query = `SELECT r.*, JSON_ARRAYAGG(JSON_OBJECT('id', i.id, 'name', i.name, 'unit', i.unit, 'quantity', i.quantity)) AS ingredients,
+    const query = `SELECT r.*, 
+    (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', i.id, 'name', i.name, 'unit', i.unit, 'quantity', i.quantity))
+      FROM ingredients AS i
+      WHERE i.recipe_id = r.id
+      GROUP BY i.recipe_id) AS ingredients,
     (SELECT JSON_ARRAYAGG(JSON_OBJECT('text', instr.text, 'step', instr.step, 'id', instr.id))
-     FROM instructions AS instr
-     WHERE instr.recipe_id = r.id
-     GROUP BY instr.recipe_id) AS instructions,
+      FROM instructions AS instr
+      WHERE instr.recipe_id = r.id
+      GROUP BY instr.recipe_id) AS instructions,
     (SELECT JSON_OBJECT('calories', n.calories, 'fat', n.fat, 'carbohydrate', n.carbohydrate)
-     FROM nutrients AS n
-     WHERE n.recipe_id = r.id
-     GROUP BY n.recipe_id) AS nutrients
+      FROM nutrients AS n
+      WHERE n.recipe_id = r.id
+      GROUP BY n.recipe_id) AS nutrients
     FROM recipes AS r
     LEFT JOIN ingredients AS i ON r.id = i.recipe_id
     GROUP BY r.id`;
