@@ -26,15 +26,12 @@ class Recipe {
       await conn.execute(query, values);
       if (newRecipe.ingredients && newRecipe.ingredients.length) {
         await conn.execute(
-          ...Recipe.getCreateIngredientsQuery(
-            newRecipe.ingredients,
-            newRecipe.id
-          )
+          ...Recipe.createIngredientsQuery(newRecipe.ingredients, newRecipe.id)
         );
       }
       if (newRecipe.instructions && newRecipe.instructions.length) {
         await conn.execute(
-          ...Recipe.getCreateInstructionsQuery(
+          ...Recipe.createInstructionsQuery(
             newRecipe.instructions,
             newRecipe.id
           )
@@ -50,7 +47,7 @@ class Recipe {
     }
   }
 
-  static getCreateInstructionsQuery(instructions, recipeId) {
+  static createInstructionsQuery(instructions, recipeId) {
     // Build sql query string
     let query = "INSERT INTO instructions (step, text, recipe_id) VALUES ";
     let values = [];
@@ -72,7 +69,7 @@ class Recipe {
     return [query, values];
   }
 
-  static getCreateIngredientsQuery(ingredients, recipeId) {
+  static createIngredientsQuery(ingredients, recipeId) {
     // Build sql query string
     let query =
       "INSERT INTO ingredients (quantity, unit, name, recipe_id) VALUES ";
