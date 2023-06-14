@@ -126,7 +126,7 @@ class Recipe {
       FROM ingredients AS i
       WHERE i.recipe_id = r.id
       GROUP BY i.recipe_id) AS ingredients,
-    (SELECT JSON_ARRAYAGG(JSON_OBJECT('text', instr.text, 'step', instr.step, 'id', instr.id))
+    (SELECT JSON_ARRAYAGG(JSON_OBJECT('text', instr.text, 'step', instr.step))
       FROM instructions AS instr
       WHERE instr.recipe_id = r.id
       GROUP BY instr.recipe_id) AS instructions,
@@ -163,7 +163,7 @@ class Recipe {
       FROM ingredients AS i
       WHERE i.recipe_id = r.id
       GROUP BY i.recipe_id) AS ingredients,
-    (SELECT JSON_ARRAYAGG(JSON_OBJECT('text', instr.text, 'step', instr.step, 'id', instr.id))
+    (SELECT JSON_ARRAYAGG(JSON_OBJECT('text', instr.text, 'step', instr.step))
       FROM instructions AS instr
       WHERE instr.recipe_id = r.id
       GROUP BY instr.recipe_id) AS instructions,
