@@ -2,6 +2,8 @@ const recipeModel = require("../models/Recipe");
 
 // Create and Save a new recipe
 exports.create = (req, res) => {
+  console.log(`${req.method} ${req.url}`.yellow);
+
   // Validate request
   if (!req.body) {
     res.status(400).send({
@@ -24,6 +26,8 @@ exports.create = (req, res) => {
 
 // Retrieve all recipes
 exports.findAll = (req, res) => {
+  console.log(`${req.method} ${req.url}`.yellow);
+
   recipeModel.getAll((err, data) => {
     if (err) {
       res.status(500).send({
@@ -37,6 +41,8 @@ exports.findAll = (req, res) => {
 
 // Find a single Recipe with a id
 exports.findOne = (req, res) => {
+  console.log(`${req.method} ${req.url}`.yellow);
+
   recipeModel.findById(req.params.id, (err, data) => {
     if (err) {
       if (err.kind === "not_found") {
@@ -54,6 +60,8 @@ exports.findOne = (req, res) => {
 
 // Update a Recipe identified by the id in the request
 exports.update = (req, res) => {
+  console.log(`${req.method} ${req.url}`.yellow);
+
   // Validate Request
   if (!req.body) {
     res.status(400).send({
@@ -78,6 +86,8 @@ exports.update = (req, res) => {
 
 // Delete a Recipe with the specified id in the request
 exports.delete = (req, res) => {
+  console.log(`${req.method} ${req.url}`.yellow);
+
   recipeModel.remove(req.params.id, (err /* data */) => {
     if (err) {
       if (err.kind === "not_found") {
@@ -95,6 +105,8 @@ exports.delete = (req, res) => {
 
 // Delete all recipes from the database.
 exports.deleteAll = (req, res) => {
+  console.log(`${req.method} ${req.url}`.yellow);
+
   recipeModel.removeAll((err /* data */) => {
     if (err)
       res.status(500).send({

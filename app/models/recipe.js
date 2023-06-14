@@ -181,7 +181,7 @@ class Recipe {
     (SELECT JSON_OBJECT('calories', n.calories, 'fat', n.fat, 'carbohydrate', n.carbohydrate)
       FROM nutrients AS n
       WHERE n.recipe_id = r.id
-      GROUP BY n.recipe_id) AS nutrients
+      GROUP BY n.rcipe_id) AS nutrients
     FROM recipes AS r
     LEFT JOIN ingredients AS i ON r.id = i.recipe_id
     GROUP BY r.id`;
@@ -193,7 +193,7 @@ class Recipe {
       console.log(res[0]);
       result(null, res[0]);
     } catch (err) {
-      console.log(err);
+      console.log(`Error: ${err.message}`.red);
       result(err);
     } finally {
       conn.end();

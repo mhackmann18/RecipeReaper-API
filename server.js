@@ -1,5 +1,5 @@
 // Starting code from https://www.bezkoder.com/node-js-rest-api-express-mysql/
-
+require("colors");
 require("dotenv").config({ path: `${__dirname}/config.env` });
 const express = require("express");
 const cors = require("cors");
