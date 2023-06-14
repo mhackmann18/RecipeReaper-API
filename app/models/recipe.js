@@ -59,9 +59,16 @@ class Recipe {
             });
           }
 
-          const instructions = newRecipe.instructions
-            ? await Recipe.addInstructions(newRecipe.instructions, newRecipe.id)
-            : null;
+          let instructions;
+
+          if (newRecipe.instructions) {
+            instructions = Recipe.addInstructions(
+              newRecipe.instructions,
+              newRecipe.id
+            )
+              .then((res) => res)
+              .catch((err) => err);
+          }
 
           if (instructions) {
             return connection.rollback(() => {
@@ -89,13 +96,16 @@ class Recipe {
   }
 
   static addInstructions(instructions, recipeId) {
+    // Build sql query string
     let sql = "INSERT INTO instructions (step, text, recipe_id) VALUES ";
     let values = [];
 
     for (let i = 0; i < instructions.length; i++) {
       if (!instructions[i].step || !instructions[i].text) {
         return new Promise((resolve, reject) => {
-          reject(new Error("sdDFSJKDSFJDFK"));
+          reject(
+            new Error("instruction fields 'step' and 'text' are required")
+          );
         });
       }
       values = [
@@ -108,6 +118,7 @@ class Recipe {
       sql += i !== instructions.length - 1 ? ", " : ";";
     }
 
+    // Execute query
     return new Promise((resolve, reject) => {
       connection.query(sql, values, (error, results) => {
         if (error) {
