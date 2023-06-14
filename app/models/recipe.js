@@ -1,11 +1,11 @@
 /* eslint-disable no-plusplus */
 /* eslint-disable no-shadow */
 /* eslint-disable consistent-return */
-const connection = require("./db");
+const connectToDB = require("./db");
 
 class Recipe {
   static create(newRecipe, result) {
-    connection.beginTransaction((err) => {
+    connectToDB.beginTransaction((err) => {
       if (err) {
         result(err, null);
         return;
@@ -25,9 +25,9 @@ class Recipe {
         newRecipe.ingredients,
       ];
 
-      connection.query(sql, values, (err /* res */) => {
+      connectToDB.query(sql, values, (err /* res */) => {
         if (err) {
-          return connection.rollback(() => {
+          return connectToDB.rollback(() => {
             console.log("error: ", err.sqlMessage);
             result(err, null);
           });
@@ -51,9 +51,9 @@ class Recipe {
           ];
         }
 
-        connection.query(sql, values, async (err /* res */) => {
+        connectToDB.query(sql, values, async (err /* res */) => {
           if (err) {
-            return connection.rollback(() => {
+            return connectToDB.rollback(() => {
               console.log("error: ", err.sqlMessage);
               result(err, null);
             });
@@ -71,15 +71,15 @@ class Recipe {
           }
 
           if (instructions) {
-            return connection.rollback(() => {
+            return connectToDB.rollback(() => {
               console.log("error");
               // result(err, null);
             });
           }
 
-          connection.commit((error) => {
+          connectToDB.commit((error) => {
             if (error) {
-              return connection.rollback(() => {
+              return connectToDB.rollback(() => {
                 console.log("error: ", error);
                 result(null, error);
               });
@@ -120,7 +120,7 @@ class Recipe {
 
     // Execute query
     return new Promise((resolve, reject) => {
-      connection.query(sql, values, (error, results) => {
+      connectToDB.query(sql, values, (error, results) => {
         if (error) {
           console.log("error: ", error.sqlMessage);
           reject(error);
@@ -147,10 +147,10 @@ class Recipe {
       GROUP BY n.recipe_id) AS nutrients
     FROM recipes AS r
     LEFT JOIN ingredients AS i ON r.id = i.recipe_id
-    WHERE r.id = ${connection.escape(id)}
+    WHERE r.id = ${connectToDB.escape(id)}
     GROUP BY r.id`;
 
-    connection.query(query, (err, res) => {
+    connectToDB.query(query, (err, res) => {
       if (err) {
         console.log("error: ", err);
         result(err, null);
@@ -186,12 +186,14 @@ class Recipe {
     LEFT JOIN ingredients AS i ON r.id = i.recipe_id
     GROUP BY r.id`;
 
-    const conn = await connection();
+    const conn = await connectToDB();
 
     try {
       const res = await conn.execute(query);
+      console.log(res[0]);
       result(null, res[0]);
     } catch (err) {
+      console.log(err);
       result(err);
     } finally {
       conn.end();
@@ -199,7 +201,7 @@ class Recipe {
   }
 
   static updateById(recipe, result) {
-    connection.query(
+    connectToDB.query(
       "UPDATE recipes SET title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ? WHERE id = ?",
       [
         recipe.title,
@@ -229,7 +231,7 @@ class Recipe {
   }
 
   // static remove(id, result) {
-  //   connection.query("DELETE FROM recipes WHERE id = ?", id, (err, res) => {
+  //   connectToDB.query("DELETE FROM recipes WHERE id = ?", id, (err, res) => {
   //     if (err) {
   //       console.log("error: ", err);
   //       result(null, err);
@@ -248,23 +250,23 @@ class Recipe {
   // }
 
   static remove(id, result) {
-    connection.beginTransaction(() => {
+    connectToDB.beginTransaction(() => {
       const queries = `DELETE FROM ingredients WHERE recipe_id = ?; 
       DELETE FROM instructions WHERE recipe_id = ?;
       DELETE FROM nutrients WHERE recipe_id = ?;`;
 
-      connection.query(queries, [id, id, id], (error /* res */) => {
+      connectToDB.query(queries, [id, id, id], (error /* res */) => {
         if (error) {
-          return connection.rollback(() => {
+          return connectToDB.rollback(() => {
             console.log("error: ", error);
             result(null, error);
           });
         }
 
         const query = "DELETE FROM recipes WHERE id = ?";
-        connection.query(query, id, (error, res) => {
+        connectToDB.query(query, id, (error, res) => {
           if (error) {
-            return connection.rollback(() => {
+            return connectToDB.rollback(() => {
               console.log("error: ", error);
               result(null, error);
             });
@@ -272,15 +274,15 @@ class Recipe {
 
           if (res.affectedRows === 0) {
             // not found recipe with the id
-            return connection.rollback(() => {
+            return connectToDB.rollback(() => {
               console.log("error: recipe doesn't exist");
               result({ kind: "not_found" }, null);
             });
           }
 
-          connection.commit((error) => {
+          connectToDB.commit((error) => {
             if (error) {
-              return connection.rollback(() => {
+              return connectToDB.rollback(() => {
                 console.log("error: ", error);
                 result(null, error);
               });
@@ -295,7 +297,7 @@ class Recipe {
   }
 
   static removeAll(result) {
-    connection.query(
+    connectToDB.query(
       "DELETE FROM ingredients; DELETE FROM instructions; DELETE FROM nutrients; DELETE FROM recipes;",
       (err, res) => {
         if (err) {
