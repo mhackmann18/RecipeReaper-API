@@ -131,7 +131,9 @@ class Recipe {
     });
   }
 
-  static findById(id, result) {
+  static async findById(id, result) {
+    const conn = await connectToDB();
+
     const query = `SELECT r.*, 
     (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', i.id, 'name', i.name, 'unit', i.unit, 'quantity', i.quantity))
       FROM ingredients AS i
@@ -147,28 +149,22 @@ class Recipe {
       GROUP BY n.recipe_id) AS nutrients
     FROM recipes AS r
     LEFT JOIN ingredients AS i ON r.id = i.recipe_id
-    WHERE r.id = ${connectToDB.escape(id)}
+    WHERE r.id = ${conn.escape(id)}
     GROUP BY r.id`;
 
-    connectToDB.query(query, (err, res) => {
-      if (err) {
-        console.log("error: ", err);
-        result(err, null);
-        return;
-      }
-
-      if (res.length) {
-        console.log("found recipe: ", res[0]);
-        result(null, res[0]);
-        return;
-      }
-
-      // not found recipe with the id
-      result({ kind: "not_found" }, null);
-    });
+    try {
+      const res = await conn.execute(query);
+      result(null, res[0][0]);
+    } catch (err) {
+      result(err);
+    } finally {
+      conn.end();
+    }
   }
 
   static async getAll(result) {
+    const conn = await connectToDB();
+
     const query = `SELECT r.*, 
     (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', i.id, 'name', i.name, 'unit', i.unit, 'quantity', i.quantity))
       FROM ingredients AS i
@@ -181,19 +177,15 @@ class Recipe {
     (SELECT JSON_OBJECT('calories', n.calories, 'fat', n.fat, 'carbohydrate', n.carbohydrate)
       FROM nutrients AS n
       WHERE n.recipe_id = r.id
-      GROUP BY n.rcipe_id) AS nutrients
+      GROUP BY n.recipe_id) AS nutrients
     FROM recipes AS r
     LEFT JOIN ingredients AS i ON r.id = i.recipe_id
     GROUP BY r.id`;
 
-    const conn = await connectToDB();
-
     try {
       const res = await conn.execute(query);
-      console.log(res[0]);
       result(null, res[0]);
     } catch (err) {
-      console.log(`Error: ${err.message}`.red);
       result(err);
     } finally {
       conn.end();

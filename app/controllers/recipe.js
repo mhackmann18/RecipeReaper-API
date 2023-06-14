@@ -1,5 +1,13 @@
 const recipeModel = require("../models/Recipe");
 
+function printErrMsg(err) {
+  console.log(`Error: ${err.message}`.red);
+}
+
+function printSuccessMsg() {
+  console.log("Successfully completed request".green);
+}
+
 // Create and Save a new recipe
 exports.create = (req, res) => {
   console.log(`${req.method} ${req.url}`.yellow);
@@ -30,10 +38,12 @@ exports.findAll = (req, res) => {
 
   recipeModel.getAll((err, data) => {
     if (err) {
+      printErrMsg(err);
       res.status(500).send({
         message: err.message || "Some error occurred while retrieving recipes.",
       });
     } else {
+      printSuccessMsg();
       res.send(data);
     }
   });
@@ -45,6 +55,7 @@ exports.findOne = (req, res) => {
 
   recipeModel.findById(req.params.id, (err, data) => {
     if (err) {
+      printErrMsg(err);
       if (err.kind === "not_found") {
         res.status(404).send({
           message: `Not found recipe with id ${req.params.id}.`,
@@ -54,7 +65,10 @@ exports.findOne = (req, res) => {
           message: `Error retrieving recipe with id ${req.params.id}`,
         });
       }
-    } else res.send(data);
+    } else {
+      printSuccessMsg();
+      res.send(data);
+    }
   });
 };
 
