@@ -1,61 +1,124 @@
+/* eslint-disable no-plusplus */
 /* eslint-disable no-shadow */
 /* eslint-disable consistent-return */
 const connection = require("./db");
 
 class Recipe {
   static create(newRecipe, result) {
-    const sql =
-      "INSERT INTO recipes SET id = ?, username = ?, title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ?";
-
-    const values = [
-      newRecipe.id,
-      newRecipe.username,
-      newRecipe.title,
-      newRecipe.servings,
-      newRecipe.serving_size,
-      newRecipe.prep_time,
-      newRecipe.cook_time,
-    ];
-
-    connection.query(sql, values, (err /* res */) => {
+    connection.beginTransaction((err) => {
       if (err) {
-        console.log("error: ", err.sqlMessage);
         result(err, null);
         return;
       }
 
-      result(null, newRecipe);
+      let sql =
+        "INSERT INTO recipes SET id = ?, username = ?, title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ?";
+
+      const values = [
+        newRecipe.id,
+        newRecipe.username,
+        newRecipe.title,
+        newRecipe.servings,
+        newRecipe.serving_size,
+        newRecipe.prep_time,
+        newRecipe.cook_time,
+        newRecipe.ingredients,
+      ];
+
+      connection.query(sql, values, (err /* res */) => {
+        if (err) {
+          return connection.rollback(() => {
+            console.log("error: ", err.sqlMessage);
+            result(err, null);
+          });
+        }
+
+        sql =
+          "INSERT INTO ingredients (id, recipe_id, quantity, unit, name) VALUES ";
+
+        let values = [];
+
+        for (let i = 0; i < newRecipe.ingredients.length; i++) {
+          sql += "(?, ?, ?, ?, ?)";
+          sql += i !== newRecipe.ingredients.length - 1 ? ", " : ";";
+          values = [
+            ...values,
+            newRecipe.ingredients[i].id,
+            newRecipe.id,
+            newRecipe.ingredients[i].quantity,
+            newRecipe.ingredients[i].unit,
+            newRecipe.ingredients[i].name,
+          ];
+        }
+
+        connection.query(sql, values, async (err /* res */) => {
+          if (err) {
+            return connection.rollback(() => {
+              console.log("error: ", err.sqlMessage);
+              result(err, null);
+            });
+          }
+
+          const instructions = newRecipe.instructions
+            ? await Recipe.addInstructions(newRecipe.instructions, newRecipe.id)
+            : null;
+
+          if (instructions) {
+            return connection.rollback(() => {
+              console.log("error");
+              // result(err, null);
+            });
+          }
+
+          connection.commit((error) => {
+            if (error) {
+              return connection.rollback(() => {
+                console.log("error: ", error);
+                result(null, error);
+              });
+            }
+
+            console.log(
+              `created new recipe '${newRecipe.title}' with id: ${newRecipe.id}`
+            );
+            result(null /* res */);
+          });
+        });
+      });
     });
   }
 
-  // static create(newRecipe, result) {
-  //   const sql =
-  //     "INSERT INTO recipes SET id = ?, username = ?, title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ?";
+  static addInstructions(instructions, recipeId) {
+    let sql = "INSERT INTO instructions (step, text, recipe_id) VALUES ";
+    let values = [];
 
-  //   const values = [
-  //     newRecipe.id,
-  //     newRecipe.username,
-  //     newRecipe.title,
-  //     newRecipe.servings,
-  //     newRecipe.serving_size,
-  //     newRecipe.prep_time,
-  //     newRecipe.cook_time,
-  //   ];
+    for (let i = 0; i < instructions.length; i++) {
+      if (!instructions[i].step || !instructions[i].text) {
+        return new Promise((resolve, reject) => {
+          reject(new Error("sdDFSJKDSFJDFK"));
+        });
+      }
+      values = [
+        ...values,
+        instructions[i].step,
+        instructions[i].text,
+        recipeId,
+      ];
+      sql += "(?, ?, ?)";
+      sql += i !== instructions.length - 1 ? ", " : ";";
+    }
 
-  //   connection.beginTransaction(()=>{
-  //     connection.query
-  //   })
-
-  //   connection.query(sql, values, (err /* res */) => {
-  //     if (err) {
-  //       console.log("error: ", err.sqlMessage);
-  //       result(err, null);
-  //       return;
-  //     }
-
-  //     result(null, newRecipe);
-  //   });
-  // }
+    return new Promise((resolve, reject) => {
+      connection.query(sql, values, (error, results) => {
+        if (error) {
+          console.log("error: ", error.sqlMessage);
+          reject(error);
+        } else {
+          resolve(results);
+        }
+      });
+    });
+  }
 
   static findById(id, result) {
     const query = `SELECT r.*, 

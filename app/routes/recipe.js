@@ -4,7 +4,7 @@ module.exports = (app) => {
   const router = require("express").Router();
 
   // Create a new recipe
-  // router.post("/", recipes.create);
+  router.post("/", recipes.create);
 
   // Get all recipes
   router.get("/", recipes.findAll);

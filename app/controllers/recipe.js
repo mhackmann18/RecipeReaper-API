@@ -1,4 +1,4 @@
-const recipeModel = require("../models/recipe");
+const recipeModel = require("../models/Recipe");
 
 // Create and Save a new recipe
 exports.create = (req, res) => {
