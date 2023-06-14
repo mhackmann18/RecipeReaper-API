@@ -1,16 +1,5 @@
+/* eslint-disable no-use-before-define */
 const recipeModel = require("../models/Recipe");
-
-function printRequest(req) {
-  console.log(`${req.method} ${req.url}`.yellow);
-}
-
-function printErrMsg(err) {
-  console.log(`Error: ${err.message}`.red);
-}
-
-function printSuccessMsg() {
-  console.log("Successfully completed request".green);
-}
 
 // Create and Save a new recipe
 exports.create = (req, res) => {
@@ -137,3 +126,15 @@ exports.deleteAll = (req, res) => {
     else res.send({ message: `All recipes were deleted successfully!` });
   });
 };
+
+function printRequest(req) {
+  console.log(`${req.method} ${req.url}`.yellow);
+}
+
+function printErrMsg(err) {
+  console.log(`Error: ${err.message}`.red);
+}
+
+function printSuccessMsg() {
+  console.log("Successfully completed request".green);
+}
