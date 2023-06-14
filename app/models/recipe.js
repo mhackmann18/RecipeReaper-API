@@ -168,7 +168,7 @@ class Recipe {
     });
   }
 
-  static getAll(result) {
+  static async getAll(result) {
     const query = `SELECT r.*, 
     (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', i.id, 'name', i.name, 'unit', i.unit, 'quantity', i.quantity))
       FROM ingredients AS i
@@ -186,17 +186,16 @@ class Recipe {
     LEFT JOIN ingredients AS i ON r.id = i.recipe_id
     GROUP BY r.id`;
 
-    connection.query(query, (err, res) => {
-      if (err) {
-        console.log("error: ", err);
-        result(null, err);
-        return;
-      }
+    const conn = await connection();
 
-      console.log("recipes: ", res);
-
-      result(null, res);
-    });
+    try {
+      const res = await conn.execute(query);
+      result(null, res[0]);
+    } catch (err) {
+      result(err);
+    } finally {
+      conn.end();
+    }
   }
 
   static updateById(recipe, result) {

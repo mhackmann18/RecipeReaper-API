@@ -1,7 +1,7 @@
 const mysql = require("mysql2/promise");
 
 // Create a connection to the database
-module.exports = (async function () {
+module.exports = async function () {
   const conn = await mysql.createConnection({
     host: process.env.HOST,
     port: process.env.MYSQL_PORT,
@@ -12,4 +12,4 @@ module.exports = (async function () {
   });
 
   return conn;
-})();
+};
