@@ -1,5 +1,9 @@
 const recipeModel = require("../models/Recipe");
 
+function printRequest(req) {
+  console.log(`${req.method} ${req.url}`.yellow);
+}
+
 function printErrMsg(err) {
   console.log(`Error: ${err.message}`.red);
 }
@@ -10,10 +14,11 @@ function printSuccessMsg() {
 
 // Create and Save a new recipe
 exports.create = (req, res) => {
-  console.log(`${req.method} ${req.url}`.yellow);
+  printRequest(req);
 
   // Validate request
-  if (!req.body) {
+  if (!req.body || !Object.keys(req.body).length) {
+    printErrMsg(new Error("Request cannot be empty"));
     res.status(400).send({
       message: "Content can not be empty",
     });
@@ -22,11 +27,13 @@ exports.create = (req, res) => {
   // Save recipe in the database
   recipeModel.create(req.body, (err, data) => {
     if (err) {
+      printErrMsg(err);
       res.status(500).send({
         message:
           err.message || "Some error occurred while creating the recipe.",
       });
     } else {
+      printSuccessMsg();
       res.send(data);
     }
   });
@@ -34,7 +41,7 @@ exports.create = (req, res) => {
 
 // Retrieve all recipes
 exports.findAll = (req, res) => {
-  console.log(`${req.method} ${req.url}`.yellow);
+  printRequest(req);
 
   recipeModel.getAll((err, data) => {
     if (err) {
@@ -51,7 +58,7 @@ exports.findAll = (req, res) => {
 
 // Find a single Recipe with a id
 exports.findOne = (req, res) => {
-  console.log(`${req.method} ${req.url}`.yellow);
+  printRequest(req);
 
   recipeModel.findById(req.params.id, (err, data) => {
     if (err) {
@@ -74,7 +81,7 @@ exports.findOne = (req, res) => {
 
 // Update a Recipe identified by the id in the request
 exports.update = (req, res) => {
-  console.log(`${req.method} ${req.url}`.yellow);
+  printRequest(req);
 
   // Validate Request
   if (!req.body) {
@@ -100,7 +107,7 @@ exports.update = (req, res) => {
 
 // Delete a Recipe with the specified id in the request
 exports.delete = (req, res) => {
-  console.log(`${req.method} ${req.url}`.yellow);
+  printRequest(req);
 
   recipeModel.remove(req.params.id, (err /* data */) => {
     if (err) {
@@ -119,7 +126,7 @@ exports.delete = (req, res) => {
 
 // Delete all recipes from the database.
 exports.deleteAll = (req, res) => {
-  console.log(`${req.method} ${req.url}`.yellow);
+  printRequest(req);
 
   recipeModel.removeAll((err /* data */) => {
     if (err)

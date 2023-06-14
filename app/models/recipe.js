@@ -4,109 +4,60 @@
 const connectToDB = require("./db");
 
 class Recipe {
-  static create(newRecipe, result) {
-    connectToDB.beginTransaction((err) => {
-      if (err) {
-        result(err, null);
-        return;
+  static async create(newRecipe, result) {
+    const conn = await connectToDB();
+
+    await conn.beginTransaction();
+
+    const query =
+      "INSERT INTO recipes SET id = ?, username = ?, title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ?";
+
+    const values = [
+      newRecipe.id,
+      newRecipe.username,
+      newRecipe.title,
+      newRecipe.servings,
+      newRecipe.serving_size,
+      newRecipe.prep_time,
+      newRecipe.cook_time,
+    ];
+
+    try {
+      await conn.execute(query, values);
+      if (newRecipe.ingredients && newRecipe.ingredients.length) {
+        await conn.execute(
+          ...Recipe.getCreateIngredientsQuery(
+            newRecipe.ingredients,
+            newRecipe.id
+          )
+        );
       }
-
-      let sql =
-        "INSERT INTO recipes SET id = ?, username = ?, title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ?";
-
-      const values = [
-        newRecipe.id,
-        newRecipe.username,
-        newRecipe.title,
-        newRecipe.servings,
-        newRecipe.serving_size,
-        newRecipe.prep_time,
-        newRecipe.cook_time,
-        newRecipe.ingredients,
-      ];
-
-      connectToDB.query(sql, values, (err /* res */) => {
-        if (err) {
-          return connectToDB.rollback(() => {
-            console.log("error: ", err.sqlMessage);
-            result(err, null);
-          });
-        }
-
-        sql =
-          "INSERT INTO ingredients (id, recipe_id, quantity, unit, name) VALUES ";
-
-        let values = [];
-
-        for (let i = 0; i < newRecipe.ingredients.length; i++) {
-          sql += "(?, ?, ?, ?, ?)";
-          sql += i !== newRecipe.ingredients.length - 1 ? ", " : ";";
-          values = [
-            ...values,
-            newRecipe.ingredients[i].id,
-            newRecipe.id,
-            newRecipe.ingredients[i].quantity,
-            newRecipe.ingredients[i].unit,
-            newRecipe.ingredients[i].name,
-          ];
-        }
-
-        connectToDB.query(sql, values, async (err /* res */) => {
-          if (err) {
-            return connectToDB.rollback(() => {
-              console.log("error: ", err.sqlMessage);
-              result(err, null);
-            });
-          }
-
-          let instructions;
-
-          if (newRecipe.instructions) {
-            instructions = Recipe.addInstructions(
-              newRecipe.instructions,
-              newRecipe.id
-            )
-              .then((res) => res)
-              .catch((err) => err);
-          }
-
-          if (instructions) {
-            return connectToDB.rollback(() => {
-              console.log("error");
-              // result(err, null);
-            });
-          }
-
-          connectToDB.commit((error) => {
-            if (error) {
-              return connectToDB.rollback(() => {
-                console.log("error: ", error);
-                result(null, error);
-              });
-            }
-
-            console.log(
-              `created new recipe '${newRecipe.title}' with id: ${newRecipe.id}`
-            );
-            result(null /* res */);
-          });
-        });
-      });
-    });
+      if (newRecipe.instructions && newRecipe.instructions.length) {
+        await conn.execute(
+          ...Recipe.getCreateInstructionsQuery(
+            newRecipe.instructions,
+            newRecipe.id
+          )
+        );
+      }
+      conn.commit();
+      result(null, newRecipe);
+    } catch (err) {
+      conn.rollback();
+      result(err);
+    } finally {
+      conn.end();
+    }
   }
 
-  static addInstructions(instructions, recipeId) {
+  static getCreateInstructionsQuery(instructions, recipeId) {
     // Build sql query string
-    let sql = "INSERT INTO instructions (step, text, recipe_id) VALUES ";
+    let query = "INSERT INTO instructions (step, text, recipe_id) VALUES ";
     let values = [];
 
     for (let i = 0; i < instructions.length; i++) {
       if (!instructions[i].step || !instructions[i].text) {
-        return new Promise((resolve, reject) => {
-          reject(
-            new Error("instruction fields 'step' and 'text' are required")
-          );
-        });
+        throw new Error("instruction fields 'step' and 'text' are required");
       }
       values = [
         ...values,
@@ -114,21 +65,32 @@ class Recipe {
         instructions[i].text,
         recipeId,
       ];
-      sql += "(?, ?, ?)";
-      sql += i !== instructions.length - 1 ? ", " : ";";
+      query += "(?, ?, ?)";
+      query += i !== instructions.length - 1 ? ", " : ";";
     }
 
-    // Execute query
-    return new Promise((resolve, reject) => {
-      connectToDB.query(sql, values, (error, results) => {
-        if (error) {
-          console.log("error: ", error.sqlMessage);
-          reject(error);
-        } else {
-          resolve(results);
-        }
-      });
-    });
+    return [query, values];
+  }
+
+  static getCreateIngredientsQuery(ingredients, recipeId) {
+    // Build sql query string
+    let query =
+      "INSERT INTO ingredients (quantity, unit, name, recipe_id) VALUES ";
+    let values = [];
+
+    for (let i = 0; i < ingredients.length; i++) {
+      const { quantity, unit, name } = ingredients[i];
+      if (!quantity || !unit || !name) {
+        throw new Error(
+          "ingredient fields 'quantity', 'unit', and 'name' are required"
+        );
+      }
+      values = [...values, quantity, unit, name, recipeId];
+      query += "(?, ?, ?, ?)";
+      query += i !== ingredients.length - 1 ? ", " : ";";
+    }
+
+    return [query, values];
   }
 
   static async findById(id, result) {
