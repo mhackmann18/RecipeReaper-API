@@ -23,7 +23,10 @@ class Recipe {
     ];
 
     try {
+      // Create recipe
       await conn.execute(query, values);
+
+      // Create ingredients
       if (newRecipe.ingredients && newRecipe.ingredients.length) {
         await conn.execute(
           ...Recipe.createInsertIngredientsQuery(
@@ -32,6 +35,8 @@ class Recipe {
           )
         );
       }
+
+      // Create instructions
       if (newRecipe.instructions && newRecipe.instructions.length) {
         await conn.execute(
           ...Recipe.createInsertInstructionsQuery(
@@ -40,6 +45,8 @@ class Recipe {
           )
         );
       }
+
+      // Create nutrients
       if (newRecipe.nutrients && Object.keys(newRecipe.nutrients).length) {
         await conn.execute(
           ...Recipe.createInsertNutrientsQuery(
