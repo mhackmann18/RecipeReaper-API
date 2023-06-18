@@ -48,11 +48,11 @@ class Recipe {
           )
         );
       }
-      // create nutrients object
-      conn.commit();
+
+      await conn.commit();
       result(null, newRecipe);
     } catch (err) {
-      conn.rollback();
+      await conn.rollback();
       result(err);
     } finally {
       conn.end();
@@ -113,29 +113,31 @@ class Recipe {
         "Cannot build query to insert nutrients. 'nutrients' argument object must contain at least one key value pair."
       );
     }
+
     // Build sql query string
     let query = "INSERT INTO nutrients (";
-    const columnNames = [];
-    const columnValues = [];
+    const columnNames = ["recipe_id"];
+    const columnValues = [recipeId];
 
     for (const [name, value] of nutrients) {
       columnNames.push(name);
       columnValues.push(value);
     }
 
-    for (let i = 0; i < ingredients.length; i++) {
-      const { quantity, unit, name, id } = ingredients[i];
-      if (!quantity || !unit || !name || !id) {
-        throw new Error(
-          "ingredient fields 'id', 'quantity', 'unit', and 'name' are required"
-        );
-      }
-      values = [...values, id, quantity, unit, name, recipeId];
-      query += "(?, ?, ?, ?, ?)";
-      query += i !== ingredients.length - 1 ? ", " : ";";
+    for (let i = 0; i < columnNames.length; i++) {
+      query +=
+        i !== columnNames.length - 1
+          ? `${columnNames[i]}, `
+          : `${columnNames[i]}) `;
     }
 
-    return [query, values];
+    query += `VALUES (?, `;
+
+    for (let i = 0; i < columnValues.length; i++) {
+      query += i !== columnValues.length - 1 ? `?, ` : `?);`;
+    }
+
+    return [query, columnValues];
   }
 
   static async findById(id, result) {
