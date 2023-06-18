@@ -238,25 +238,6 @@ class Recipe {
     );
   }
 
-  // static remove(id, result) {
-  //   connectToDB.query("DELETE FROM recipes WHERE id = ?", id, (err, res) => {
-  //     if (err) {
-  //       console.log("error: ", err);
-  //       result(null, err);
-  //       return;
-  //     }
-
-  //     if (res.affectedRows === 0) {
-  //       // not found recipe with the id
-  //       result({ kind: "not_found" }, null);
-  //       return;
-  //     }
-
-  //     console.log("deleted recipe with id: ", id);
-  //     result(null, res);
-  //   });
-  // }
-
   static async remove(id, result) {
     const conn = await connectToDB();
 
@@ -289,20 +270,36 @@ class Recipe {
     }
   }
 
-  static removeAll(result) {
-    connectToDB.query(
-      "DELETE FROM ingredients; DELETE FROM instructions; DELETE FROM nutrients; DELETE FROM recipes;",
-      (err, res) => {
-        if (err) {
-          console.log("error: ", err);
-          result(null, err);
-          return;
-        }
+  static async removeAll(result) {
+    const conn = await connectToDB();
 
-        console.log(`deleted ${res.affectedRows} recipes`);
-        result(null, res);
+    await conn.beginTransaction();
+
+    try {
+      let query = "DELETE FROM ingredients";
+      await conn.execute(query);
+
+      query = "DELETE FROM instructions";
+      await conn.execute(query);
+
+      query = "DELETE FROM nutrients";
+      await conn.execute(query);
+
+      query = "DELETE FROM recipes";
+      const res = await conn.execute(query);
+
+      if (!res[0].affectedRows) {
+        throw new Error(`There are no recipes to delete`);
       }
-    );
+
+      await conn.commit();
+      result();
+    } catch (err) {
+      await conn.rollback();
+      result(err);
+    } finally {
+      conn.end();
+    }
   }
 }
 

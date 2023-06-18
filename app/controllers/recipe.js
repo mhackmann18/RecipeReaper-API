@@ -116,12 +116,16 @@ exports.deleteAll = (req, res) => {
   printRequest(req);
 
   recipeModel.removeAll((err /* data */) => {
-    if (err)
+    if (err) {
+      printErrMsg(err);
       res.status(500).send({
         message:
           err.message || "Some error occurred while removing all recipes.",
       });
-    else res.send({ message: `All recipes were deleted successfully!` });
+    } else {
+      printSuccessMsg();
+      res.send({ message: `Successfully removed all recipes` });
+    }
   });
 };
 
