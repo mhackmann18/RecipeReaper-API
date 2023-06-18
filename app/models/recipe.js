@@ -144,8 +144,6 @@ class Recipe {
       query += i !== columnValues.length - 1 ? `?, ` : `?);`;
     }
 
-    console.log(query);
-
     return [query, columnValues];
   }
 
@@ -161,7 +159,18 @@ class Recipe {
       FROM instructions AS instr
       WHERE instr.recipe_id = r.id
       GROUP BY instr.recipe_id) AS instructions,
-    (SELECT JSON_OBJECT('calories', n.calories, 'fat', n.fat, 'carbohydrate', n.carbohydrate)
+    (SELECT JSON_OBJECT(
+    'calories', n.calories,
+    'fat', n.fat,
+    'saturated_fat', n.saturated_fat,
+    'unsaturated_fat', n.unsaturated_fat,
+    'trans_fat', n.trans_fat,
+    'carbohydrate', n.carbohydrate,
+    'protein', n.protein,
+    'sugar', n.sugar,
+    'cholesterol', n.cholesterol,
+    'sodium', n.sodium,
+    'fiber', n.fiber)
       FROM nutrients AS n
       WHERE n.recipe_id = r.id
       GROUP BY n.recipe_id) AS nutrients
@@ -172,6 +181,9 @@ class Recipe {
 
     try {
       const res = await conn.execute(query);
+      if (!res[0].affectedRows) {
+        throw new Error(`Recipe with id '${id}' doesn't exist`);
+      }
       result(null, res[0][0]);
     } catch (err) {
       result(err);
@@ -192,7 +204,18 @@ class Recipe {
       FROM instructions AS instr
       WHERE instr.recipe_id = r.id
       GROUP BY instr.recipe_id) AS instructions,
-    (SELECT JSON_OBJECT('calories', n.calories, 'fat', n.fat, 'carbohydrate', n.carbohydrate)
+    (SELECT JSON_OBJECT(
+    'calories', n.calories,
+    'fat', n.fat,
+    'saturated_fat', n.saturated_fat,
+    'unsaturated_fat', n.unsaturated_fat,
+    'trans_fat', n.trans_fat,
+    'carbohydrate', n.carbohydrate,
+    'protein', n.protein,
+    'sugar', n.sugar,
+    'cholesterol', n.cholesterol,
+    'sodium', n.sodium,
+    'fiber', n.fiber)
       FROM nutrients AS n
       WHERE n.recipe_id = r.id
       GROUP BY n.recipe_id) AS nutrients
