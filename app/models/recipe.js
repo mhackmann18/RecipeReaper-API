@@ -26,17 +26,29 @@ class Recipe {
       await conn.execute(query, values);
       if (newRecipe.ingredients && newRecipe.ingredients.length) {
         await conn.execute(
-          ...Recipe.createIngredientsQuery(newRecipe.ingredients, newRecipe.id)
+          ...Recipe.createInsertIngredientsQuery(
+            newRecipe.ingredients,
+            newRecipe.id
+          )
         );
       }
       if (newRecipe.instructions && newRecipe.instructions.length) {
         await conn.execute(
-          ...Recipe.createInstructionsQuery(
+          ...Recipe.createInsertInstructionsQuery(
             newRecipe.instructions,
             newRecipe.id
           )
         );
       }
+      if (newRecipe.nutrients && Object.keys(newRecipe.nutrients).length) {
+        await conn.execute(
+          ...Recipe.createInsertNutrientsQuery(
+            newRecipe.nutrients,
+            newRecipe.id
+          )
+        );
+      }
+      // create nutrients object
       conn.commit();
       result(null, newRecipe);
     } catch (err) {
@@ -47,7 +59,7 @@ class Recipe {
     }
   }
 
-  static createInstructionsQuery(instructions, recipeId) {
+  static createInsertInstructionsQuery(instructions, recipeId) {
     // Build sql query string
     let query = "INSERT INTO instructions (step, text, recipe_id) VALUES ";
     let values = [];
@@ -69,21 +81,57 @@ class Recipe {
     return [query, values];
   }
 
-  static createIngredientsQuery(ingredients, recipeId) {
+  static createInsertIngredientsQuery(ingredients, recipeId) {
     // Build sql query string
     let query =
-      "INSERT INTO ingredients (quantity, unit, name, recipe_id) VALUES ";
+      "INSERT INTO ingredients (id, quantity, unit, name, recipe_id) VALUES ";
     let values = [];
 
     for (let i = 0; i < ingredients.length; i++) {
-      const { quantity, unit, name } = ingredients[i];
-      if (!quantity || !unit || !name) {
+      const { quantity, unit, name, id } = ingredients[i];
+      if (!quantity || !unit || !name || !id) {
         throw new Error(
-          "ingredient fields 'quantity', 'unit', and 'name' are required"
+          "ingredient fields 'id', 'quantity', 'unit', and 'name' are required"
         );
       }
-      values = [...values, quantity, unit, name, recipeId];
-      query += "(?, ?, ?, ?)";
+      values = [...values, id, quantity, unit, name, recipeId];
+      query += "(?, ?, ?, ?, ?)";
+      query += i !== ingredients.length - 1 ? ", " : ";";
+    }
+
+    return [query, values];
+  }
+
+  static createInsertNutrientsQuery(nutrients, recipeId) {
+    if (!nutrients) {
+      throw new Error(
+        "Cannot build query to insert nutrients. Parameter 'nutrients' must be an object."
+      );
+    }
+    if (!Object.keys(nutrients).length) {
+      throw new Error(
+        "Cannot build query to insert nutrients. 'nutrients' argument object must contain at least one key value pair."
+      );
+    }
+    // Build sql query string
+    let query = "INSERT INTO nutrients (";
+    const columnNames = [];
+    const columnValues = [];
+
+    for (const [name, value] of nutrients) {
+      columnNames.push(name);
+      columnValues.push(value);
+    }
+
+    for (let i = 0; i < ingredients.length; i++) {
+      const { quantity, unit, name, id } = ingredients[i];
+      if (!quantity || !unit || !name || !id) {
+        throw new Error(
+          "ingredient fields 'id', 'quantity', 'unit', and 'name' are required"
+        );
+      }
+      values = [...values, id, quantity, unit, name, recipeId];
+      query += "(?, ?, ?, ?, ?)";
       query += i !== ingredients.length - 1 ? ", " : ";";
     }
 

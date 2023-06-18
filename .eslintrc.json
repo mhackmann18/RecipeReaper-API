@@ -15,6 +15,7 @@
         "global-require": "off",
         "camelcase": "off",
         "func-names": "off",
-        "no-plusplus": "off"
+        "no-plusplus": "off",
+        "no-restricted-syntax": "off"
     }
 }
