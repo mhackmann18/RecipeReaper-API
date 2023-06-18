@@ -98,18 +98,16 @@ exports.update = (req, res) => {
 exports.delete = (req, res) => {
   printRequest(req);
 
-  recipeModel.remove(req.params.id, (err /* data */) => {
+  recipeModel.remove(req.params.id, (err) => {
     if (err) {
-      if (err.kind === "not_found") {
-        res.status(404).send({
-          message: `Not found recipe with id ${req.params.id}.`,
-        });
-      } else {
-        res.status(500).send({
-          message: `Could not delete recipe with id ${req.params.id}`,
-        });
-      }
-    } else res.send({ message: `Recipe was deleted successfully!` });
+      printErrMsg(err);
+      res.status(500).send({
+        message: `Could not delete recipe with id ${req.params.id}`,
+      });
+    } else {
+      printSuccessMsg();
+      res.send({ message: `Recipe was deleted successfully` });
+    }
   });
 };
 

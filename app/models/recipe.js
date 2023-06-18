@@ -257,51 +257,36 @@ class Recipe {
   //   });
   // }
 
-  static remove(id, result) {
-    connectToDB.beginTransaction(() => {
-      const queries = `DELETE FROM ingredients WHERE recipe_id = ?; 
-      DELETE FROM instructions WHERE recipe_id = ?;
-      DELETE FROM nutrients WHERE recipe_id = ?;`;
+  static async remove(id, result) {
+    const conn = await connectToDB();
 
-      connectToDB.query(queries, [id, id, id], (error /* res */) => {
-        if (error) {
-          return connectToDB.rollback(() => {
-            console.log("error: ", error);
-            result(null, error);
-          });
-        }
+    await conn.beginTransaction();
 
-        const query = "DELETE FROM recipes WHERE id = ?";
-        connectToDB.query(query, id, (error, res) => {
-          if (error) {
-            return connectToDB.rollback(() => {
-              console.log("error: ", error);
-              result(null, error);
-            });
-          }
+    try {
+      let query = "DELETE FROM ingredients WHERE recipe_id = ?";
+      await conn.execute(query, [id]);
 
-          if (res.affectedRows === 0) {
-            // not found recipe with the id
-            return connectToDB.rollback(() => {
-              console.log("error: recipe doesn't exist");
-              result({ kind: "not_found" }, null);
-            });
-          }
+      query = "DELETE FROM instructions WHERE recipe_id = ?";
+      await conn.execute(query, [id]);
 
-          connectToDB.commit((error) => {
-            if (error) {
-              return connectToDB.rollback(() => {
-                console.log("error: ", error);
-                result(null, error);
-              });
-            }
+      query = "DELETE FROM nutrients WHERE recipe_id = ?";
+      await conn.execute(query, [id]);
 
-            console.log("deleted recipe with id: ", id);
-            result(null, res);
-          });
-        });
-      });
-    });
+      query = "DELETE FROM recipes WHERE id = ?";
+      const res = await conn.execute(query, [id]);
+
+      if (!res[0].affectedRows) {
+        throw new Error(`Recipe with id '${id}' doesn't exist`);
+      }
+
+      await conn.commit();
+      result();
+    } catch (err) {
+      await conn.rollback();
+      result(err);
+    } finally {
+      conn.end();
+    }
   }
 
   static removeAll(result) {
