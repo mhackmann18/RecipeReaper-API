@@ -126,7 +126,7 @@ class Recipe {
     const columnNames = ["recipe_id"];
     const columnValues = [recipeId];
 
-    for (const [name, value] of nutrients) {
+    for (const [name, value] of Object.entries(nutrients)) {
       columnNames.push(name);
       columnValues.push(value);
     }
@@ -138,11 +138,13 @@ class Recipe {
           : `${columnNames[i]}) `;
     }
 
-    query += `VALUES (?, `;
+    query += `VALUES (`;
 
     for (let i = 0; i < columnValues.length; i++) {
       query += i !== columnValues.length - 1 ? `?, ` : `?);`;
     }
+
+    console.log(query);
 
     return [query, columnValues];
   }
@@ -208,7 +210,7 @@ class Recipe {
     }
   }
 
-  static updateById(recipe, result) {
+  static async updateById(recipe, result) {
     connectToDB.query(
       "UPDATE recipes SET title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ? WHERE id = ?",
       [
