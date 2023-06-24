@@ -234,33 +234,81 @@ class Recipe {
   }
 
   static async updateById(recipe, result) {
-    connectToDB.query(
-      "UPDATE recipes SET title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ? WHERE id = ?",
-      [
-        recipe.title,
-        recipe.servings,
-        recipe.serving_size,
-        recipe.prep_time,
-        recipe.cook_time,
-        recipe.id,
-      ],
-      (err, res) => {
-        if (err) {
-          console.log("error: ", err);
-          result(null, err);
-          return;
-        }
+    const conn = await connectToDB();
 
-        if (res.affectedRows === 0) {
-          // not found Recipe with the id
-          result({ kind: "not_found" }, null);
-          return;
-        }
+    await conn.beginTransaction();
 
-        console.log("updated tutorial: ", { ...recipe });
-        result(null, { ...recipe });
+    const query =
+      "UPDATE recipes SET username = ?, title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ? WHERE id = ?";
+
+    const values = [
+      recipe.username,
+      recipe.title,
+      recipe.servings,
+      recipe.serving_size,
+      recipe.prep_time,
+      recipe.cook_time,
+      recipe.id,
+    ];
+
+    try {
+      // Update recipe
+      const res = await conn.execute(query, values);
+
+      if (!res[0].affectedRows) {
+        throw new Error(`Recipe with id '${recipe.id}' doesn't exist`);
       }
-    );
+
+      await Recipe.updateIngredients(recipe.ingredients, recipe.id, conn);
+
+      // // Update instructions
+      // if (recipe.instructions && recipe.instructions.length) {
+      //   await conn.execute(
+      //     ...Recipe.createInsertInstructionsQuery(
+      //       recipe.instructions,
+      //       recipe.id
+      //     )
+      //   );
+      // }
+
+      // // Update nutrients
+      // if (recipe.nutrients && Object.keys(recipe.nutrients).length) {
+      //   await conn.execute(
+      //     ...Recipe.createInsertNutrientsQuery(recipe.nutrients, recipe.id)
+      //   );
+      // }
+
+      await conn.commit();
+      result(null, recipe);
+    } catch (err) {
+      await conn.rollback();
+      result(err);
+    } finally {
+      conn.end();
+    }
+  }
+
+  static async updateIngredients(ingredients, recipeId, conn) {
+    // Update ingredients
+    if (ingredients && ingredients.length) {
+      const results = [];
+      for (const ingredient of ingredients) {
+        const { quantity, unit, name, id } = ingredient;
+        results.push(
+          conn.execute(
+            "UPDATE ingredients SET quantity = ?, unit = ?, name = ? WHERE id = ?",
+            [quantity, unit, name, id]
+          )
+        );
+      }
+      await Promise.all(results);
+    }
+    // Remove ingredients
+    else {
+      await conn.execute("DELETE FROM ingredients WHERE recipe_id = ?", [
+        recipeId,
+      ]);
+    }
   }
 
   static async remove(id, result) {

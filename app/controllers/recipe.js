@@ -81,16 +81,20 @@ exports.update = (req, res) => {
 
   recipeModel.updateById(req.body, (err, data) => {
     if (err) {
-      if (err.kind === "not_found") {
+      printErrMsg(err);
+      if (err.cause === "not_found") {
         res.status(404).send({
-          message: `Not found recipe with id ${req.params.recipe.id}.`,
+          message: `Not found recipe with id ${req.body.id}.`,
         });
       } else {
         res.status(500).send({
-          message: `Error updating recipe with id ${req.params.recipe.id}`,
+          message: `Error updating recipe with id ${req.body.id}`,
         });
       }
-    } else res.send(data);
+    } else {
+      printSuccessMsg();
+      res.send(data);
+    }
   });
 };
 
