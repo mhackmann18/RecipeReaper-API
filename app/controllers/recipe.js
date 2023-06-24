@@ -79,16 +79,16 @@ exports.update = (req, res) => {
     });
   }
 
-  recipeModel.updateById(req.body, (err, data) => {
+  recipeModel.updateById(req.body, req.params.id, (err, data) => {
     if (err) {
       printErrMsg(err);
       if (err.cause === "not_found") {
         res.status(404).send({
-          message: `Not found recipe with id ${req.body.id}.`,
+          message: `No recipe found with id '${req.params.id}'.`,
         });
       } else {
         res.status(500).send({
-          message: `Error updating recipe with id ${req.body.id}`,
+          message: `Error updating recipe with id ${req.params.id}`,
         });
       }
     } else {
