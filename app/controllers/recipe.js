@@ -52,9 +52,9 @@ exports.findOne = (req, res) => {
   recipeModel.findById(req.params.id, (err, data) => {
     if (err) {
       printErrMsg(err);
-      if (err.kind === "not_found") {
+      if (err.cause === "not_found") {
         res.status(404).send({
-          message: `Not found recipe with id ${req.params.id}.`,
+          message: `No recipe found with id ${req.params.id}.`,
         });
       } else {
         res.status(500).send({

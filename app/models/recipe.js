@@ -181,8 +181,10 @@ class Recipe {
 
     try {
       const res = await conn.execute(query);
-      if (!res[0].affectedRows) {
-        throw new Error(`Recipe with id '${id}' doesn't exist`);
+      if (!res[0][0]) {
+        throw new Error(`Recipe with id '${id}' doesn't exist`, {
+          cause: "not_found",
+        });
       }
       result(null, res[0][0]);
     } catch (err) {
