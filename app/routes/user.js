@@ -9,5 +9,11 @@ module.exports = (app) => {
   // Login user
   router.post("/login", users.login);
 
+  // Update info
+  router.put("/:username", users.update);
+
+  // Delete user
+  router.delete("/:username", users.delete);
+
   app.use("/api/users", router);
 };
