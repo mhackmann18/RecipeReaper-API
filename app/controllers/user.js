@@ -2,6 +2,34 @@ const bcrypt = require("bcryptjs");
 const utils = require("../utilities/utils");
 const User = require("../models/User");
 
+exports.findOne = async (req, res) => {
+  utils.printRequest(req);
+
+  const { user, error } = await User.findByUsername(req.params.username);
+
+  if (user) {
+    utils.printSuccessMsg();
+    res.send(user);
+  } else {
+    utils.printErrMsg(error);
+    res.status(500).send({ message: error || "An unexpected error occurred" });
+  }
+};
+
+exports.findAll = async (req, res) => {
+  utils.printRequest(req);
+
+  const { users, error } = await User.findAll();
+
+  if (users) {
+    utils.printSuccessMsg();
+    res.send(users);
+  } else {
+    utils.printErrMsg(error);
+    res.status(500).send({ message: error || "An unexpected error occurred" });
+  }
+};
+
 exports.register = async (req, res) => {
   utils.printRequest(req);
 

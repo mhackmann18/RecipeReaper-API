@@ -3,6 +3,12 @@ module.exports = (app) => {
 
   const router = require("express").Router();
 
+  // Get a single user
+  router.get("/:username", users.findOne);
+
+  // Get all users
+  router.get("/", users.findAll);
+
   // Register a new user
   router.post("/register", users.register);
 
