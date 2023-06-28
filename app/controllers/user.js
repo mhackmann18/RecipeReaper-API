@@ -1,7 +1,10 @@
-// const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const utils = require("../utilities/utils");
+const User = require("../models/User");
 
 exports.register = async (req, res) => {
+  utils.printRequest(req);
+
   // Validate request
 
   if (!req.body) {
@@ -26,13 +29,33 @@ exports.register = async (req, res) => {
 
   // const oldUser = await User.findOne({ username })
 
-  const passwordHash = await bcrypt.hash(password);
-
   // Create user
 
-  // const user = await User.create({ username, passwordHash });
+  const salt = bcrypt.genSaltSync(10);
+  const hash = bcrypt.hashSync(password, salt);
+  console.log(hash);
+
+  // const passwordHash = await bcrypt.hash(password, 10);
+
+  User.create({ username, hash }, (err, user) => {
+    if (err) {
+      utils.printErrMsg(err);
+      res.status(500).send({ message: err.message || "Some error occurred" });
+    } else {
+      utils.printSuccessMsg();
+      res.send(user);
+    }
+  });
 };
 
 exports.login = (req, res) => {
   res.send("user logged in");
+};
+
+exports.update = (req, res) => {
+  res.send({ message: "User updated" });
+};
+
+exports.delete = (req, res) => {
+  res.send({ message: "user updated" });
 };
