@@ -16,6 +16,21 @@ class User {
     }
   }
 
+  static async findOne(username) {
+    const conn = await connectToDB();
+
+    const query = "SELECT * FROM users WHERE username = ?";
+
+    try {
+      const res = await conn.execute(query, [username]);
+      return { user: res[0] };
+    } catch (error) {
+      return { error };
+    } finally {
+      conn.end();
+    }
+  }
+
   static async findAll() {
     const conn = await connectToDB();
 
