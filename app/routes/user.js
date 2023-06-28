@@ -4,7 +4,10 @@ module.exports = (app) => {
   const router = require("express").Router();
 
   // Register a new user
-  router.post("/", users.register);
+  router.post("/register", users.register);
+
+  // Login user
+  router.post("/login", users.login);
 
   app.use("/api/users", router);
 };
