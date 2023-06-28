@@ -33,19 +33,16 @@ exports.register = async (req, res) => {
 
   const salt = bcrypt.genSaltSync(10);
   const hash = bcrypt.hashSync(password, salt);
-  console.log(hash);
 
-  // const passwordHash = await bcrypt.hash(password, 10);
+  const { user, error } = await User.create({ username, password: hash });
 
-  User.create({ username, hash }, (err, user) => {
-    if (err) {
-      utils.printErrMsg(err);
-      res.status(500).send({ message: err.message || "Some error occurred" });
-    } else {
-      utils.printSuccessMsg();
-      res.send(user);
-    }
-  });
+  if (error) {
+    utils.printErrMsg(error);
+    res.status(500).send({ message: error.message || "Some error occurred" });
+  } else {
+    utils.printSuccessMsg();
+    res.send(user);
+  }
 };
 
 exports.login = (req, res) => {
