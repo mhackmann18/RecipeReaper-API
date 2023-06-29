@@ -96,6 +96,16 @@ exports.update = (req, res) => {
   res.send({ message: "User updated" });
 };
 
-exports.delete = (req, res) => {
-  res.send({ message: "user updated" });
+exports.delete = async (req, res) => {
+  utils.printRequest(req);
+
+  const { data, error } = await User.delete(req.params.username);
+
+  if (data) {
+    utils.printSuccessMsg();
+    res.send(data);
+  } else {
+    utils.printErrMsg(error);
+    res.status(500).send({ message: error || "An unexpected error occurred" });
+  }
 };

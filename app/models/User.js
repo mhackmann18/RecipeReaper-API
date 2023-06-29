@@ -7,8 +7,8 @@ class User {
     const query = "INSERT INTO users SET username = ?, password = ?";
 
     try {
-      const res = await conn.execute(query, [username, password]);
-      return { user: res };
+      await conn.execute(query, [username, password]);
+      return { user: { username, password } };
     } catch (error) {
       return { error };
     } finally {
@@ -40,6 +40,30 @@ class User {
     try {
       const res = await conn.execute(query);
       return { users: res[0] };
+    } catch (error) {
+      return { error };
+    } finally {
+      conn.end();
+    }
+  }
+
+  static async delete(username) {
+    const conn = await connectToDB();
+
+    const query = "DELETE FROM users WHERE username = ?";
+
+    try {
+      const response = await conn.execute(query, [username]);
+      if (!response[0].affectedRows) {
+        return {
+          data: { message: `No user found with username '${username}'` },
+        };
+      }
+      return {
+        data: {
+          message: `User with username '${username}' successfully deleted`,
+        },
+      };
     } catch (error) {
       return { error };
     } finally {
