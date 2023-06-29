@@ -23,7 +23,8 @@ class User {
 
     try {
       const res = await conn.execute(query, [username]);
-      return { user: res[0] };
+
+      return { user: res[0][0] };
     } catch (error) {
       return { error };
     } finally {

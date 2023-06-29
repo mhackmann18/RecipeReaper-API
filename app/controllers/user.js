@@ -27,7 +27,13 @@ exports.register = async (req, res) => {
 
   // Check if user already exists
 
-  // const oldUser = await User.findOne({ username })
+  const existingUser = await User.findOne(username);
+
+  if (existingUser.user) {
+    res.status(400).send({ message: "Username is already taken" });
+    utils.printErrMsg({ message: "Username is already taken" });
+    return;
+  }
 
   // Create user
 
@@ -53,9 +59,18 @@ exports.findOne = async (req, res) => {
   if (user) {
     utils.printSuccessMsg();
     res.send(user);
-  } else {
+  } else if (error) {
     utils.printErrMsg(error);
-    res.status(500).send({ message: error || "An unexpected error occurred" });
+    res
+      .status(500)
+      .send({ message: error.message || "An unexpected error occurred" });
+  } else {
+    utils.printErrMsg({
+      message: `No user found with username '${req.params.username}'`,
+    });
+    res.status(400).send({
+      message: `No user found with username '${req.params.username}'`,
+    });
   }
 };
 
