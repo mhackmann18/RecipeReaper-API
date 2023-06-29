@@ -20,7 +20,7 @@ exports.register = async (req, res) => {
     res.status(400).send({ message: "'password' property is required" });
   }
   for (const name of Object.keys(req.body)) {
-    if (name !== "password" && name !== "username") {
+    if (name !== "password" && name !== "username" && name !== "theme") {
       res.status(400).send({ message: `Unknown property '${name}' provided` });
     }
   }
