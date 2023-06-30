@@ -1,10 +1,12 @@
+const auth = require("../middleware/auth");
+
 module.exports = (app) => {
   const users = require("../controllers/user");
 
   const router = require("express").Router();
 
   // Get a single user
-  router.get("/:username", users.findOne);
+  router.get("/:username", auth, users.findOne);
 
   // Get all users
   router.get("/", users.findAll);
