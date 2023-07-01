@@ -3,10 +3,6 @@ const connectToDB = require("./db");
 class User {
   #connection;
 
-  constructor() {
-    this.#connection = connectToDB();
-  }
-
   async create({ username, password }) {
     const query = "INSERT INTO users SET username = ?, password = ?";
 
@@ -18,12 +14,12 @@ class User {
   async findOne(username) {
     const query = "SELECT * FROM users WHERE username = ?";
 
-    const res = await this.connection.execute(query, [username]);
+    const res = await this.#connection.execute(query, [username]);
 
-    return res[0][0];
+    return res[0].length ? res[0][0] : null;
   }
 
-  static async findAll() {
+  async findAll() {
     const query = "SELECT * FROM users";
 
     const res = await this.#connection.execute(query);
@@ -31,7 +27,7 @@ class User {
     return res[0];
   }
 
-  static async delete(username) {
+  async delete(username) {
     const query = "DELETE FROM users WHERE username = ?";
 
     const response = await this.#connection.execute(query, [username]);
@@ -45,6 +41,10 @@ class User {
     return {
       username,
     };
+  }
+
+  async openConnection() {
+    this.#connection = await connectToDB();
   }
 
   closeConnection() {
