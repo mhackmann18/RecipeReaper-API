@@ -6,6 +6,8 @@ require("dotenv").config({ path: `${__dirname}/config.env` });
 const { requestWrapper } = utils;
 
 exports.register = requestWrapper(async (req, user) => {
+  // Validate request
+
   if (!req.body) {
     throw new Error("Content cannot be empty", { cause: { code: 400 } });
   }
