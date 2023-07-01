@@ -1,4 +1,4 @@
-const auth = require("../middleware/auth");
+// const auth = require("../middleware/auth");
 
 module.exports = (app) => {
   const users = require("../controllers/user");
@@ -6,7 +6,7 @@ module.exports = (app) => {
   const router = require("express").Router();
 
   // Get a single user
-  router.get("/:username", auth, users.findOne);
+  router.get("/:username", users.findOne);
 
   // Get all users
   router.get("/", users.findAll);
@@ -17,7 +17,7 @@ module.exports = (app) => {
   // Login user
   router.post("/login", users.login);
 
-  // Update info
+  // Update user info
   router.put("/:username", users.update);
 
   // Delete user
