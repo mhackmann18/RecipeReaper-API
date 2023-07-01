@@ -1,11 +1,12 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const utils = require("../utilities/utils");
+const User = require("../models/User");
 require("dotenv").config({ path: `${__dirname}/config.env` });
 
 const { requestWrapper } = utils;
 
-exports.register = requestWrapper(async (req, user) => {
+exports.register = requestWrapper(User, async (req, user) => {
   // Validate request
 
   if (!req.body) {
@@ -56,7 +57,7 @@ exports.register = requestWrapper(async (req, user) => {
   return newUser;
 });
 
-exports.findOne = requestWrapper(async (req, user) => {
+exports.findOne = requestWrapper(User, async (req, user) => {
   const existingUser = await user.findOne(req.params.username);
 
   if (existingUser) return existingUser;
@@ -66,13 +67,13 @@ exports.findOne = requestWrapper(async (req, user) => {
   });
 });
 
-exports.findAll = requestWrapper(async (req, user) => {
+exports.findAll = requestWrapper(User, async (req, user) => {
   const users = await user.findAll();
 
   return users;
 });
 
-exports.login = requestWrapper(async (req, user) => {
+exports.login = requestWrapper(User, async (req, user) => {
   // Validate request
 
   if (!req.body) {
@@ -126,7 +127,7 @@ exports.update = requestWrapper((req, res) => {
   res.send({ message: "User updated" });
 });
 
-exports.delete = requestWrapper(async (req, user) => {
+exports.delete = requestWrapper(User, async (req, user) => {
   const oldUser = await user.delete(req.params.username);
 
   return oldUser;

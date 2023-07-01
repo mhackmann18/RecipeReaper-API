@@ -1,5 +1,3 @@
-const User = require("../models/User");
-
 exports.printRequest = (req) => {
   console.log(`${req.method} ${req.url}`.yellow);
 };
@@ -12,8 +10,8 @@ exports.printSuccessMsg = () => {
   console.log("Successfully completed request".green);
 };
 
-exports.requestWrapper = (fn) => async (req, res) => {
-  const user = new User();
+exports.requestWrapper = (Model, fn) => async (req, res) => {
+  const user = new Model();
 
   try {
     await user.openConnection();
