@@ -4,37 +4,58 @@ const utils = require("../utilities/utils");
 const User = require("../models/User");
 require("dotenv").config({ path: `${__dirname}/config.env` });
 
-exports.register = async (req, res) => {
-  utils.printRequest(req);
+const requestWrapper = (fn) => async (req, res) => {
+  let user;
 
-  // Validate request
+  try {
+    user = new User();
+    utils.printRequest(req);
+    const data = await fn(req, user);
+    res.send(data);
+    utils.printSuccessMsg();
+  } catch (error) {
+    res
+      .status((error.cause && error.cause.code) || 500)
+      .send({ message: error.message || "An unexpected error occurred" });
+    utils.printErrMsg(error);
+  } finally {
+    user.closeConnection();
+  }
+};
 
+exports.register = requestWrapper(async (req) => {
   if (!req.body) {
-    res.status(400).send({ message: "Content cannot be empty" });
+    throw new Error("Content cannot be empty", { cause: { code: 400 } });
   }
 
   const { username, password } = req.body;
 
   if (!username) {
-    res.status(400).send({ message: "'username' property is required" });
+    throw new Error("'username' property is required", {
+      cause: { code: 400 },
+    });
   }
+
   if (!password) {
-    res.status(400).send({ message: "'password' property is required" });
+    throw new Error("'password' property is required", {
+      cause: { code: 400 },
+    });
   }
+
   for (const name of Object.keys(req.body)) {
     if (name !== "password" && name !== "username" && name !== "theme") {
-      res.status(400).send({ message: `Unknown property '${name}' provided` });
+      throw new Error(`Unknown property '${name}' provided`, {
+        cause: { code: 400 },
+      });
     }
   }
 
-  // Check if user already exists
+  // Check if username already exists
 
   const existingUser = await User.findOne(username);
 
   if (existingUser.user) {
-    res.status(400).send({ message: "Username is already taken" });
-    utils.printErrMsg({ message: "Username is already taken" });
-    return;
+    throw new Error("Username is already taken", { cause: { code: 400 } });
   }
 
   // Create user
@@ -45,41 +66,27 @@ exports.register = async (req, res) => {
   const { user, error } = await User.create({ username, password: hash });
 
   if (error) {
-    utils.printErrMsg(error);
-    res
-      .status(500)
-      .send({ message: error.message.message || "Some error occurred" });
-  } else {
-    user.token = jwt.sign({ username }, process.env.TOKEN_KEY, {
-      expiresIn: "2h",
-    });
-    utils.printSuccessMsg();
-    res.send(user);
+    throw new Error(error.message || "Some error occurred");
   }
-};
 
-exports.findOne = async (req, res) => {
-  utils.printRequest(req);
+  user.token = jwt.sign({ username }, process.env.TOKEN_KEY, {
+    expiresIn: "2h",
+  });
 
-  const { user, error } = await User.findOne(req.params.username);
+  return user;
+});
 
-  if (user) {
-    utils.printSuccessMsg();
-    res.send(user);
-  } else if (error) {
-    utils.printErrMsg(error);
-    res.status(500).send({
-      message: error.message.message || "An unexpected error occurred",
-    });
-  } else {
-    utils.printErrMsg({
-      message: `No user found with username '${req.params.username}'`,
-    });
-    res.status(400).send({
-      message: `No user found with username '${req.params.username}'`,
-    });
-  }
-};
+exports.findOne = requestWrapper(async (req) => {
+  const { error, user } = await User.findOne(req.params.username);
+
+  if (error) throw error;
+
+  if (user) return user;
+
+  throw new Error(`No user found with username '${req.params.username}'`, {
+    cause: { code: 400 },
+  });
+});
 
 exports.findAll = async (req, res) => {
   utils.printRequest(req);
