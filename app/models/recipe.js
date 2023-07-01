@@ -304,29 +304,16 @@ class Recipe {
   static async remove(id, result) {
     const conn = await connectToDB();
 
-    await conn.beginTransaction();
-
     try {
-      let query = "DELETE FROM ingredients WHERE recipe_id = ?";
-      await conn.execute(query, [id]);
-
-      query = "DELETE FROM instructions WHERE recipe_id = ?";
-      await conn.execute(query, [id]);
-
-      query = "DELETE FROM nutrients WHERE recipe_id = ?";
-      await conn.execute(query, [id]);
-
-      query = "DELETE FROM recipes WHERE id = ?";
+      const query = "DELETE FROM recipes WHERE id = ?";
       const res = await conn.execute(query, [id]);
 
       if (!res[0].affectedRows) {
         throw new Error(`Recipe with id '${id}' doesn't exist`);
       }
 
-      await conn.commit();
       result();
     } catch (err) {
-      await conn.rollback();
       result(err);
     } finally {
       conn.end();
