@@ -234,7 +234,7 @@ class Recipe {
   }
 
   static createInsertInstructionsQuery(instructions, recipeId) {
-    // Build sql query string
+    // Build an sql query string
     let query = "INSERT INTO instructions (step, text, recipe_id) VALUES ";
     let values = [];
 
@@ -256,7 +256,7 @@ class Recipe {
   }
 
   static createInsertIngredientsQuery(ingredients, recipeId) {
-    // Build sql query string
+    // Build an sql query string
     let query =
       "INSERT INTO ingredients (id, quantity, unit, name, recipe_id) VALUES ";
     let values = [];
