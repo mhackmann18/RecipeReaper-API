@@ -27,6 +27,20 @@ class User {
     return res[0];
   }
 
+  async update(oldUsername, { username, password, theme }) {
+    const query =
+      "UPDATE users SET username = ?, password = ?, theme = ? WHERE username = ?";
+
+    await this.#connection.execute(query, [
+      username,
+      password,
+      theme,
+      oldUsername,
+    ]);
+
+    return { username, password, theme };
+  }
+
   async delete(username) {
     const query = "DELETE FROM users WHERE username = ?";
 

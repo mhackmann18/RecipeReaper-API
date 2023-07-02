@@ -123,8 +123,41 @@ exports.login = requestWrapper(User, async (req, user) => {
   throw new Error("Incorrect password", { cause: { code: 400 } });
 });
 
-exports.update = requestWrapper((req, res) => {
-  res.send({ message: "User updated" });
+exports.update = requestWrapper(User, async (req, user) => {
+  // Validate request
+
+  if (!req.body) {
+    throw new Error("Content cannot be empty", { cause: { code: 400 } });
+  }
+
+  const { username, password, theme } = req.body;
+
+  if (!username) {
+    throw new Error("'username' property is required", {
+      cause: { code: 400 },
+    });
+  }
+  if (!password) {
+    throw new Error("'password' property is required", {
+      cause: { code: 400 },
+    });
+  }
+  if (!theme) {
+    throw new Error("'theme' property is required", {
+      cause: { code: 400 },
+    });
+  }
+  for (const name of Object.keys(req.body)) {
+    if (name !== "password" && name !== "username" && name !== "theme") {
+      throw new Error(`Unknown property '${name}' provided`, {
+        cause: { code: 400 },
+      });
+    }
+  }
+
+  const updatedUser = await user.update(req.params.username, req.body);
+
+  return updatedUser;
 });
 
 exports.delete = requestWrapper(User, async (req, user) => {
