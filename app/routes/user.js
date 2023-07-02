@@ -1,5 +1,10 @@
 // const auth = require("../middleware/auth");
 
+// Permission levels:
+// public
+// user
+// admin
+
 module.exports = (app) => {
   const users = require("../controllers/user");
 

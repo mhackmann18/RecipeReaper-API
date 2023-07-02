@@ -27,18 +27,14 @@ class User {
     return res[0];
   }
 
-  async update(oldUsername, { username, password, theme }) {
-    const query =
-      "UPDATE users SET username = ?, password = ?, theme = ? WHERE username = ?";
+  async update(oldUsername, user) {
+    const query = `UPDATE users SET ${this.#connection.escape(
+      user
+    )} WHERE username = ${this.#connection.escape(oldUsername)}`;
 
-    await this.#connection.execute(query, [
-      username,
-      password,
-      theme,
-      oldUsername,
-    ]);
+    await this.#connection.execute(query, [user, oldUsername]);
 
-    return { username, password, theme };
+    return user;
   }
 
   async delete(username) {

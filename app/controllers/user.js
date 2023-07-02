@@ -123,30 +123,19 @@ exports.login = requestWrapper(User, async (req, user) => {
   throw new Error("Incorrect password", { cause: { code: 400 } });
 });
 
-exports.update = requestWrapper(User, async (req, user) => {
+// Protected
+exports.update = requestWrapper(User, async (req, db) => {
+  const updatedUser = {};
+  const oldUsername = req.params.username;
+  const newUsername = req.body.username;
+  const newPassword = req.body.password;
+
   // Validate request
 
   if (!req.body) {
     throw new Error("Content cannot be empty", { cause: { code: 400 } });
   }
 
-  const { username, password, theme } = req.body;
-
-  if (!username) {
-    throw new Error("'username' property is required", {
-      cause: { code: 400 },
-    });
-  }
-  if (!password) {
-    throw new Error("'password' property is required", {
-      cause: { code: 400 },
-    });
-  }
-  if (!theme) {
-    throw new Error("'theme' property is required", {
-      cause: { code: 400 },
-    });
-  }
   for (const name of Object.keys(req.body)) {
     if (name !== "password" && name !== "username" && name !== "theme") {
       throw new Error(`Unknown property '${name}' provided`, {
@@ -155,7 +144,52 @@ exports.update = requestWrapper(User, async (req, user) => {
     }
   }
 
-  const updatedUser = await user.update(req.params.username, req.body);
+  // Update theme
+
+  if (req.body.theme) {
+    updatedUser.theme = req.body.theme;
+  }
+
+  // Check that user with old username exists
+
+  const oldUser = await db.findOne(oldUsername);
+
+  if (!oldUser) {
+    throw new Error(`No user found with the username '${oldUsername}'`, {
+      cause: { code: 400 },
+    });
+  }
+
+  // See if new username is available
+
+  if (newUsername) {
+    const existingUser = await db.findOne(newUsername);
+
+    if (existingUser && existingUser.username !== oldUsername) {
+      throw new Error("Username is already taken", { cause: { code: 400 } });
+    }
+
+    updatedUser.username = newUsername;
+  }
+
+  // Generate new password hash
+
+  if (!(await bcrypt.compare(newPassword, oldUser.password))) {
+    const salt = bcrypt.genSaltSync(10);
+    const passwordHash = bcrypt.hashSync(newPassword, salt);
+
+    updatedUser.password = passwordHash;
+  }
+
+  await db.update(req.params.username, updatedUser);
+
+  // Get updated token
+
+  if (newUsername) {
+    updatedUser.token = jwt.sign({ newUsername }, process.env.TOKEN_KEY, {
+      expiresIn: "2h",
+    });
+  }
 
   return updatedUser;
 });
