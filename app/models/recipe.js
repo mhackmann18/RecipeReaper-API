@@ -106,7 +106,7 @@ class Recipe {
     return res[0][0];
   }
 
-  async getAll() {
+  async findAll() {
     const query = `SELECT r.*, 
     (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', i.id, 'name', i.name, 'unit', i.unit, 'quantity', i.quantity))
       FROM ingredients AS i
@@ -314,12 +314,13 @@ class Recipe {
     return [query, columnValues];
   }
 
-  openConnection() {
-    this.#connection = connectToDB();
+  async openConnection() {
+    this.#connection = await connectToDB();
   }
 
   closeConnection() {
-    this.#connection = connectToDB();
+    this.#connection.end();
+    this.#connection = null;
   }
 }
 

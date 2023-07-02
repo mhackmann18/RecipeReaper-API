@@ -1,57 +1,31 @@
 /* eslint-disable no-use-before-define */
-const recipeModel = require("../models/Recipe");
+const Recipe = require("../models/Recipe");
+const { requestWrapper } = require("../utilities/utils");
 
 // Create and Save a new recipe
-exports.create = (req, res) => {
-  printRequest(req);
-
+exports.create = requestWrapper(Recipe, async (req, recipe) => {
   // Validate request
   if (!req.body || !Object.keys(req.body).length) {
-    printErrMsg(new Error("Request cannot be empty"));
-    res.status(400).send({
-      message: "Content can not be empty",
-    });
+    throw new Error("Content cannot be empty", { cause: { code: 400 } });
   }
 
   // Save recipe in the database
-  recipeModel.create(req.body, (err, data) => {
-    if (err) {
-      printErrMsg(err);
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while creating the recipe.",
-      });
-    } else {
-      printSuccessMsg();
-      res.send(data);
-    }
-  });
-};
+  const newRecipe = await recipe.create(req.body);
+
+  return newRecipe;
+});
 
 // Retrieve all recipes
-exports.findAll = (req, res) => {
-  printRequest(req);
+exports.findAll = requestWrapper(Recipe, async (req, recipe) => {
+  const recipes = await recipe.findAll();
 
-  recipeModel.getAll((err, data) => {
-    if (err) {
-      printErrMsg(err);
-      res.status(500).send({
-        message: err.message || "Some error occurred while retrieving recipes.",
-      });
-    } else {
-      printSuccessMsg();
-      res.send(data);
-    }
-  });
-};
+  return recipes;
+});
 
 // Find a single Recipe with a id
-exports.findOne = (req, res) => {
-  printRequest(req);
-
-  recipeModel.findById(req.params.id, (err, data) => {
+exports.findOne = requestWrapper(Recipe, async (req, res) => {
+  Recipe.findById(req.params.id, (err, data) => {
     if (err) {
-      printErrMsg(err);
       if (err.cause === "not_found") {
         res.status(404).send({
           message: `No recipe found with id ${req.params.id}.`,
@@ -62,16 +36,13 @@ exports.findOne = (req, res) => {
         });
       }
     } else {
-      printSuccessMsg();
       res.send(data);
     }
   });
-};
+});
 
 // Update a Recipe identified by the id in the request
-exports.update = (req, res) => {
-  printRequest(req);
-
+exports.update = requestWrapper(Recipe, async (req, res) => {
   // Validate Request
   if (!req.body) {
     res.status(400).send({
@@ -79,9 +50,8 @@ exports.update = (req, res) => {
     });
   }
 
-  recipeModel.updateById(req.body, req.params.id, (err, data) => {
+  Recipe.updateById(req.body, req.params.id, (err, data) => {
     if (err) {
-      printErrMsg(err);
       if (err.cause === "not_found") {
         res.status(404).send({
           message: `No recipe found with id '${req.params.id}'.`,
@@ -92,55 +62,34 @@ exports.update = (req, res) => {
         });
       }
     } else {
-      printSuccessMsg();
       res.send(data);
     }
   });
-};
+});
 
 // Delete a Recipe with the specified id in the request
-exports.delete = (req, res) => {
-  printRequest(req);
-
-  recipeModel.remove(req.params.id, (err) => {
+exports.delete = requestWrapper(Recipe, async (req, res) => {
+  Recipe.remove(req.params.id, (err) => {
     if (err) {
-      printErrMsg(err);
       res.status(500).send({
         message: `Could not delete recipe with id ${req.params.id}`,
       });
     } else {
-      printSuccessMsg();
       res.send({ message: `Recipe was deleted successfully` });
     }
   });
-};
+});
 
 // Delete all recipes from the database.
-exports.deleteAll = (req, res) => {
-  printRequest(req);
-
-  recipeModel.removeAll((err /* data */) => {
+exports.deleteAll = requestWrapper(Recipe, async (req, res) => {
+  Recipe.removeAll((err /* data */) => {
     if (err) {
-      printErrMsg(err);
       res.status(500).send({
         message:
           err.message || "Some error occurred while removing all recipes.",
       });
     } else {
-      printSuccessMsg();
       res.send({ message: `Successfully removed all recipes` });
     }
   });
-};
-
-function printRequest(req) {
-  console.log(`${req.method} ${req.url}`.yellow);
-}
-
-function printErrMsg(err) {
-  console.log(`Error: ${err.message}`.red);
-}
-
-function printSuccessMsg() {
-  console.log("Successfully completed request".green);
-}
+});
