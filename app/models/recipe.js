@@ -4,11 +4,9 @@
 const connectToDB = require("./db");
 
 class Recipe {
-  static async create(newRecipe, result) {
-    const conn = await connectToDB();
+  #connection;
 
-    await conn.beginTransaction();
-
+  async create(newRecipe) {
     const query =
       "INSERT INTO recipes SET id = ?, username = ?, title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ?";
 
@@ -23,12 +21,14 @@ class Recipe {
     ];
 
     try {
+      await this.#connection.beginTransaction();
+
       // Create recipe
-      await conn.execute(query, values);
+      await this.#connection.execute(query, values);
 
       // Create ingredients
       if (newRecipe.ingredients && newRecipe.ingredients.length) {
-        await conn.execute(
+        await this.#connection.execute(
           ...Recipe.createInsertIngredientsQuery(
             newRecipe.ingredients,
             newRecipe.id
@@ -38,7 +38,7 @@ class Recipe {
 
       // Create instructions
       if (newRecipe.instructions && newRecipe.instructions.length) {
-        await conn.execute(
+        await this.#connection.execute(
           ...Recipe.createInsertInstructionsQuery(
             newRecipe.instructions,
             newRecipe.id
@@ -48,7 +48,7 @@ class Recipe {
 
       // Create nutrients
       if (newRecipe.nutrients && Object.keys(newRecipe.nutrients).length) {
-        await conn.execute(
+        await this.#connection.execute(
           ...Recipe.createInsertNutrientsQuery(
             newRecipe.nutrients,
             newRecipe.id
@@ -56,14 +56,181 @@ class Recipe {
         );
       }
 
-      await conn.commit();
-      result(null, newRecipe);
-    } catch (err) {
-      await conn.rollback();
-      result(err);
-    } finally {
-      conn.end();
+      await this.#connection.commit();
+
+      return newRecipe;
+    } catch (error) {
+      await this.#connection.rollback();
+      throw error;
     }
+  }
+
+  async findById(id) {
+    const query = `SELECT r.*, 
+    (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', i.id, 'name', i.name, 'unit', i.unit, 'quantity', i.quantity))
+      FROM ingredients AS i
+      WHERE i.recipe_id = r.id
+      GROUP BY i.recipe_id) AS ingredients,
+    (SELECT JSON_ARRAYAGG(JSON_OBJECT('text', instr.text, 'step', instr.step))
+      FROM instructions AS instr
+      WHERE instr.recipe_id = r.id
+      GROUP BY instr.recipe_id) AS instructions,
+    (SELECT JSON_OBJECT(
+    'calories', n.calories,
+    'fat', n.fat,
+    'saturated_fat', n.saturated_fat,
+    'unsaturated_fat', n.unsaturated_fat,
+    'trans_fat', n.trans_fat,
+    'carbohydrate', n.carbohydrate,
+    'protein', n.protein,
+    'sugar', n.sugar,
+    'cholesterol', n.cholesterol,
+    'sodium', n.sodium,
+    'fiber', n.fiber)
+      FROM nutrients AS n
+      WHERE n.recipe_id = r.id
+      GROUP BY n.recipe_id) AS nutrients
+    FROM recipes AS r
+    LEFT JOIN ingredients AS i ON r.id = i.recipe_id
+    WHERE r.id = ${this.#connection.escape(id)}
+    GROUP BY r.id`;
+
+    const res = await this.#connection.execute(query);
+
+    if (!res[0][0]) {
+      throw new Error(`Recipe with id '${id}' doesn't exist`, {
+        cause: { code: 400 },
+      });
+    }
+
+    return res[0][0];
+  }
+
+  async getAll() {
+    const query = `SELECT r.*, 
+    (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', i.id, 'name', i.name, 'unit', i.unit, 'quantity', i.quantity))
+      FROM ingredients AS i
+      WHERE i.recipe_id = r.id
+      GROUP BY i.recipe_id) AS ingredients,
+    (SELECT JSON_ARRAYAGG(JSON_OBJECT('text', instr.text, 'step', instr.step))
+      FROM instructions AS instr
+      WHERE instr.recipe_id = r.id
+      GROUP BY instr.recipe_id) AS instructions,
+    (SELECT JSON_OBJECT(
+    'calories', n.calories,
+    'fat', n.fat,
+    'saturated_fat', n.saturated_fat,
+    'unsaturated_fat', n.unsaturated_fat,
+    'trans_fat', n.trans_fat,
+    'carbohydrate', n.carbohydrate,
+    'protein', n.protein,
+    'sugar', n.sugar,
+    'cholesterol', n.cholesterol,
+    'sodium', n.sodium,
+    'fiber', n.fiber)
+      FROM nutrients AS n
+      WHERE n.recipe_id = r.id
+      GROUP BY n.recipe_id) AS nutrients
+    FROM recipes AS r
+    LEFT JOIN ingredients AS i ON r.id = i.recipe_id
+    GROUP BY r.id`;
+
+    const res = await this.#connection.execute(query);
+
+    return res[0];
+  }
+
+  async updateById(recipe, id) {
+    const query =
+      "UPDATE recipes SET username = ?, title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ? WHERE id = ?";
+
+    const values = [
+      recipe.username,
+      recipe.title,
+      recipe.servings,
+      recipe.serving_size,
+      recipe.prep_time,
+      recipe.cook_time,
+      id,
+    ];
+
+    try {
+      await this.#connection.beginTransaction();
+
+      // Update recipe
+      const res = await this.#connection.execute(query, values);
+
+      if (!res[0].affectedRows) {
+        throw new Error(`Recipe with id '${id}' doesn't exist`, {
+          cause: { code: 400 },
+        });
+      }
+
+      // Update ingredients
+      await this.#connection.execute(
+        "DELETE FROM ingredients WHERE recipe_id = ?",
+        [id]
+      );
+
+      if (recipe.ingredients && recipe.ingredients.length) {
+        await this.#connection.execute(
+          ...Recipe.createInsertIngredientsQuery(recipe.ingredients, id)
+        );
+      }
+
+      // Update instructions
+      await this.#connection.execute(
+        "DELETE FROM instructions WHERE recipe_id = ?",
+        [id]
+      );
+
+      if (recipe.instructions && recipe.instructions.length) {
+        await this.#connection.execute(
+          ...Recipe.createInsertInstructionsQuery(recipe.instructions, id)
+        );
+      }
+
+      // Update nutrients
+      await this.#connection.execute(
+        "DELETE FROM nutrients WHERE recipe_id = ?",
+        [id]
+      );
+
+      if (recipe.nutrients && Object.keys(recipe.nutrients).length) {
+        await this.#connection.execute(
+          ...Recipe.createInsertNutrientsQuery(recipe.nutrients, id)
+        );
+      }
+
+      await this.#connection.commit();
+
+      return recipe;
+    } catch (err) {
+      await this.#connection.rollback();
+      throw err;
+    }
+  }
+
+  async remove(id) {
+    const query = "DELETE FROM recipes WHERE id = ?";
+    const res = await this.#connection.execute(query, [id]);
+
+    if (!res[0].affectedRows) {
+      throw new Error(`Recipe with id '${id}' doesn't exist`);
+    }
+
+    return { id };
+  }
+
+  async removeAll() {
+    const query = "DELETE FROM recipes";
+    const res = await this.#connection.execute(query);
+
+    if (!res[0].affectedRows) {
+      throw new Error(`There are no recipes to delete`);
+    }
+
+    return { message: "Successfully removed all recipes" };
   }
 
   static createInsertInstructionsQuery(instructions, recipeId) {
@@ -147,209 +314,12 @@ class Recipe {
     return [query, columnValues];
   }
 
-  static async findById(id, result) {
-    const conn = await connectToDB();
-
-    const query = `SELECT r.*, 
-    (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', i.id, 'name', i.name, 'unit', i.unit, 'quantity', i.quantity))
-      FROM ingredients AS i
-      WHERE i.recipe_id = r.id
-      GROUP BY i.recipe_id) AS ingredients,
-    (SELECT JSON_ARRAYAGG(JSON_OBJECT('text', instr.text, 'step', instr.step))
-      FROM instructions AS instr
-      WHERE instr.recipe_id = r.id
-      GROUP BY instr.recipe_id) AS instructions,
-    (SELECT JSON_OBJECT(
-    'calories', n.calories,
-    'fat', n.fat,
-    'saturated_fat', n.saturated_fat,
-    'unsaturated_fat', n.unsaturated_fat,
-    'trans_fat', n.trans_fat,
-    'carbohydrate', n.carbohydrate,
-    'protein', n.protein,
-    'sugar', n.sugar,
-    'cholesterol', n.cholesterol,
-    'sodium', n.sodium,
-    'fiber', n.fiber)
-      FROM nutrients AS n
-      WHERE n.recipe_id = r.id
-      GROUP BY n.recipe_id) AS nutrients
-    FROM recipes AS r
-    LEFT JOIN ingredients AS i ON r.id = i.recipe_id
-    WHERE r.id = ${conn.escape(id)}
-    GROUP BY r.id`;
-
-    try {
-      const res = await conn.execute(query);
-      if (!res[0][0]) {
-        throw new Error(`Recipe with id '${id}' doesn't exist`, {
-          cause: "not_found",
-        });
-      }
-      result(null, res[0][0]);
-    } catch (err) {
-      result(err);
-    } finally {
-      conn.end();
-    }
+  openConnection() {
+    this.#connection = connectToDB();
   }
 
-  static async getAll(result) {
-    const conn = await connectToDB();
-
-    const query = `SELECT r.*, 
-    (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', i.id, 'name', i.name, 'unit', i.unit, 'quantity', i.quantity))
-      FROM ingredients AS i
-      WHERE i.recipe_id = r.id
-      GROUP BY i.recipe_id) AS ingredients,
-    (SELECT JSON_ARRAYAGG(JSON_OBJECT('text', instr.text, 'step', instr.step))
-      FROM instructions AS instr
-      WHERE instr.recipe_id = r.id
-      GROUP BY instr.recipe_id) AS instructions,
-    (SELECT JSON_OBJECT(
-    'calories', n.calories,
-    'fat', n.fat,
-    'saturated_fat', n.saturated_fat,
-    'unsaturated_fat', n.unsaturated_fat,
-    'trans_fat', n.trans_fat,
-    'carbohydrate', n.carbohydrate,
-    'protein', n.protein,
-    'sugar', n.sugar,
-    'cholesterol', n.cholesterol,
-    'sodium', n.sodium,
-    'fiber', n.fiber)
-      FROM nutrients AS n
-      WHERE n.recipe_id = r.id
-      GROUP BY n.recipe_id) AS nutrients
-    FROM recipes AS r
-    LEFT JOIN ingredients AS i ON r.id = i.recipe_id
-    GROUP BY r.id`;
-
-    try {
-      const res = await conn.execute(query);
-      result(null, res[0]);
-    } catch (err) {
-      result(err);
-    } finally {
-      conn.end();
-    }
-  }
-
-  static async updateById(recipe, id, result) {
-    const conn = await connectToDB();
-
-    await conn.beginTransaction();
-
-    const query =
-      "UPDATE recipes SET username = ?, title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ? WHERE id = ?";
-
-    const values = [
-      recipe.username,
-      recipe.title,
-      recipe.servings,
-      recipe.serving_size,
-      recipe.prep_time,
-      recipe.cook_time,
-      id,
-    ];
-
-    try {
-      // Update recipe
-      const res = await conn.execute(query, values);
-
-      if (!res[0].affectedRows) {
-        throw new Error(`Recipe with id '${id}' doesn't exist`, {
-          cause: "not_found",
-        });
-      }
-
-      // Update ingredients
-      await conn.execute("DELETE FROM ingredients WHERE recipe_id = ?", [id]);
-
-      if (recipe.ingredients && recipe.ingredients.length) {
-        await conn.execute(
-          ...Recipe.createInsertIngredientsQuery(recipe.ingredients, id)
-        );
-      }
-
-      // Update instructions
-      await conn.execute("DELETE FROM instructions WHERE recipe_id = ?", [id]);
-
-      if (recipe.instructions && recipe.instructions.length) {
-        await conn.execute(
-          ...Recipe.createInsertInstructionsQuery(recipe.instructions, id)
-        );
-      }
-
-      // Update nutrients
-      await conn.execute("DELETE FROM nutrients WHERE recipe_id = ?", [id]);
-
-      if (recipe.nutrients && Object.keys(recipe.nutrients).length) {
-        await conn.execute(
-          ...Recipe.createInsertNutrientsQuery(recipe.nutrients, id)
-        );
-      }
-
-      await conn.commit();
-
-      result(null, recipe);
-    } catch (err) {
-      await conn.rollback();
-      result(err);
-    } finally {
-      conn.end();
-    }
-  }
-
-  static async remove(id, result) {
-    const conn = await connectToDB();
-
-    try {
-      const query = "DELETE FROM recipes WHERE id = ?";
-      const res = await conn.execute(query, [id]);
-
-      if (!res[0].affectedRows) {
-        throw new Error(`Recipe with id '${id}' doesn't exist`);
-      }
-
-      result();
-    } catch (err) {
-      result(err);
-    } finally {
-      conn.end();
-    }
-  }
-
-  static async removeAll(result) {
-    const conn = await connectToDB();
-
-    await conn.beginTransaction();
-
-    try {
-      let query = "DELETE FROM ingredients";
-      await conn.execute(query);
-
-      query = "DELETE FROM instructions";
-      await conn.execute(query);
-
-      query = "DELETE FROM nutrients";
-      await conn.execute(query);
-
-      query = "DELETE FROM recipes";
-      const res = await conn.execute(query);
-
-      if (!res[0].affectedRows) {
-        throw new Error(`There are no recipes to delete`);
-      }
-
-      await conn.commit();
-      result();
-    } catch (err) {
-      await conn.rollback();
-      result(err);
-    } finally {
-      conn.end();
-    }
+  closeConnection() {
+    this.#connection = connectToDB();
   }
 }
 
