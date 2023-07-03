@@ -9,6 +9,26 @@ exports.create = requestWrapper(Recipe, async (req, recipe) => {
     throw new Error("Content cannot be empty", { cause: { code: 400 } });
   }
 
+  for (const columnName of Object.keys(req.body)) {
+    if (
+      ![
+        "user_id",
+        "title",
+        "servings",
+        "serving_size",
+        "prep_time",
+        "cook_time",
+        "ingredients",
+        "instructions",
+        "nutrients",
+      ].includes(columnName)
+    ) {
+      throw new Error(`Unexpected property '${columnName}' provided`, {
+        cause: { code: 400 },
+      });
+    }
+  }
+
   const newRecipe = await recipe.create(req.body);
 
   return newRecipe;
@@ -24,6 +44,8 @@ exports.findAll = requestWrapper(Recipe, async (req, recipe) => {
 // Find a single Recipe with an id
 exports.findOne = requestWrapper(Recipe, async (req, recipe) => {
   const existingRecipe = await recipe.findById(req.params.id);
+
+  delete existingRecipe.user_id;
 
   return existingRecipe;
 });
