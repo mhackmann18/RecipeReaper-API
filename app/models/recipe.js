@@ -142,10 +142,9 @@ class Recipe {
 
   async updateById(recipe, id) {
     const query =
-      "UPDATE recipes SET username = ?, title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ? WHERE id = ?";
+      "UPDATE recipes SET title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ? WHERE id = ?";
 
     const values = [
-      recipe.username,
       recipe.title,
       recipe.servings,
       recipe.serving_size,
