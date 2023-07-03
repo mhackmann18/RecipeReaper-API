@@ -156,24 +156,38 @@ class Recipe {
   }
 
   async updateById(recipe, id) {
-    const query =
-      "UPDATE recipes SET title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ? WHERE id = ?";
+    const recipeTableData = ((recipe) => {
+      const { user_id, title, servings, serving_size, prep_time, cook_time } =
+        recipe;
 
-    const values = [
-      recipe.title,
-      recipe.servings,
-      recipe.serving_size,
-      recipe.prep_time,
-      recipe.cook_time,
-      id,
-    ];
+      const recipeData = {};
+
+      if (user_id) recipeData.user_id = user_id;
+
+      if (title) recipeData.title = title;
+
+      if (servings) recipeData.servings = servings;
+
+      if (serving_size || serving_size === null)
+        recipeData.serving_size = serving_size;
+
+      if (prep_time || prep_time === null) recipeData.prep_time = prep_time;
+
+      if (cook_time || cook_time === null) recipeData.cook_time = cook_time;
+
+      return recipeData;
+    })(recipe);
 
     try {
       await this.#connection.beginTransaction();
 
       // UPDATE RECIPE
 
-      const res = await this.#connection.execute(query, values);
+      const query = `UPDATE recipes SET ${this.#connection.escape(
+        recipeTableData
+      )} WHERE id = ${this.#connection.escape(id)}`;
+
+      const res = await this.#connection.execute(query);
 
       if (!res[0].affectedRows) {
         throw new Error(`Recipe with id '${id}' doesn't exist`, {
@@ -234,8 +248,6 @@ class Recipe {
     );
 
     const oldIngredients = res[0];
-
-    console.log(oldIngredients);
 
     const actions = [];
 
