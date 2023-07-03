@@ -5,6 +5,7 @@ const { requestWrapper } = require("../utilities/utils");
 // Create and Save a new recipe
 exports.create = requestWrapper(Recipe, async (req, recipe) => {
   // Validate request
+
   if (!req.body || !Object.keys(req.body).length) {
     throw new Error("Content cannot be empty", { cause: { code: 400 } });
   }

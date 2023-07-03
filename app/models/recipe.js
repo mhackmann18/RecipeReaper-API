@@ -7,23 +7,30 @@ class Recipe {
   #connection;
 
   async create(newRecipe) {
-    const query =
-      "INSERT INTO recipes SET user_id = ?, title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ?";
+    const recipeTableData = ((recipe) => {
+      const { user_id, title, servings, serving_size, prep_time, cook_time } =
+        recipe;
 
-    const values = [
-      newRecipe.user_id,
-      newRecipe.title,
-      newRecipe.servings,
-      newRecipe.serving_size,
-      newRecipe.prep_time,
-      newRecipe.cook_time,
-    ];
+      const recipeData = { user_id, title, servings };
+
+      if (serving_size) recipeData.serving_size = serving_size;
+
+      if (prep_time) recipeData.prep_time = prep_time;
+
+      if (cook_time) recipeData.cook_time = cook_time;
+
+      return recipeData;
+    })(newRecipe);
+
+    const query = `INSERT INTO recipes SET ${this.#connection.escape(
+      recipeTableData
+    )}`;
 
     try {
       await this.#connection.beginTransaction();
 
       // Create recipe
-      const recipe = await this.#connection.execute(query, values);
+      const recipe = await this.#connection.execute(query);
 
       const recipeId = recipe[0].insertId;
 
@@ -148,6 +155,76 @@ class Recipe {
     return { message: "Successfully deleted ingredient" };
   }
 
+  async updateById(recipe, id) {
+    const query =
+      "UPDATE recipes SET title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ? WHERE id = ?";
+
+    const values = [
+      recipe.title,
+      recipe.servings,
+      recipe.serving_size,
+      recipe.prep_time,
+      recipe.cook_time,
+      id,
+    ];
+
+    try {
+      await this.#connection.beginTransaction();
+
+      // UPDATE RECIPE
+
+      const res = await this.#connection.execute(query, values);
+
+      if (!res[0].affectedRows) {
+        throw new Error(`Recipe with id '${id}' doesn't exist`, {
+          cause: { code: 400 },
+        });
+      }
+
+      // UPDATE INGREDIENTS
+
+      if (recipe.ingredients && recipe.ingredients.length) {
+        await this.updateIngredients(recipe.ingredients, id);
+      } else {
+        await this.#connection.execute(
+          "DELETE FROM ingredients WHERE recipe_id = ?",
+          [id]
+        );
+      }
+
+      // UPDATE INSTRUCTIONS
+
+      if (recipe.instructions && recipe.instructions.length) {
+        await this.updateInstructions(recipe.instructions, id);
+      } else {
+        await this.#connection.execute(
+          "DELETE FROM instructions WHERE recipe_id = ?",
+          [id]
+        );
+      }
+
+      // UPDATE NUTRIENTS
+
+      if (recipe.nutrients && Object.keys(recipe.nutrients).length) {
+        await this.updateNutrients(recipe.nutrients, id);
+      } else {
+        await this.#connection.execute(
+          "DELETE FROM nutrients WHERE recipe_id = ?",
+          [id]
+        );
+      }
+
+      await this.#connection.commit();
+
+      const updatedRecipe = await this.findById(id);
+
+      return updatedRecipe;
+    } catch (err) {
+      await this.#connection.rollback();
+      throw err;
+    }
+  }
+
   async updateIngredients(newIngredients, recipeId) {
     // Get recipe's old ingredients
 
@@ -157,6 +234,8 @@ class Recipe {
     );
 
     const oldIngredients = res[0];
+
+    console.log(oldIngredients);
 
     const actions = [];
 
@@ -216,61 +295,6 @@ class Recipe {
     );
 
     return res[0];
-  }
-
-  async updateById(recipe, id) {
-    const query =
-      "UPDATE recipes SET title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ? WHERE id = ?";
-
-    const values = [
-      recipe.title,
-      recipe.servings,
-      recipe.serving_size,
-      recipe.prep_time,
-      recipe.cook_time,
-      id,
-    ];
-
-    try {
-      await this.#connection.beginTransaction();
-
-      // UPDATE RECIPE
-
-      const res = await this.#connection.execute(query, values);
-
-      if (!res[0].affectedRows) {
-        throw new Error(`Recipe with id '${id}' doesn't exist`, {
-          cause: { code: 400 },
-        });
-      }
-
-      // UPDATE INGREDIENTS
-
-      if (recipe.ingredients && recipe.ingredients.length) {
-        await this.updateIngredients(recipe.ingredients, id);
-      }
-
-      // UPDATE INSTRUCTIONS
-
-      if (recipe.instructions && recipe.instructions.length) {
-        await this.updateInstructions(recipe.instructions, id);
-      }
-
-      // UPDATE NUTRIENTS
-
-      if (recipe.nutrients && Object.keys(recipe.nutrients).length) {
-        await this.updateNutrients(recipe.nutrients, id);
-      }
-
-      await this.#connection.commit();
-
-      const updatedRecipe = await this.findById(id);
-
-      return updatedRecipe;
-    } catch (err) {
-      await this.#connection.rollback();
-      throw err;
-    }
   }
 
   async updateInstructions(newInstructions, recipeId) {
