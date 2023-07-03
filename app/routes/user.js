@@ -11,7 +11,7 @@ module.exports = (app) => {
   const router = require("express").Router();
 
   // Get a single user
-  router.get("/:username", users.findOne);
+  router.get("/:id", users.findOne);
 
   // Get all users
   router.get("/", users.findAll);
@@ -23,10 +23,10 @@ module.exports = (app) => {
   router.post("/login", users.login);
 
   // Update user info
-  router.put("/:username", users.update);
+  router.put("/:id", users.update);
 
   // Delete user
-  router.delete("/:username", users.delete);
+  router.delete("/:id", users.delete);
 
   app.use("/api/users", router);
 };

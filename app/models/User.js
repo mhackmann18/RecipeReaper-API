@@ -3,18 +3,28 @@ const connectToDB = require("./db");
 class User {
   #connection;
 
-  async create({ username, password }) {
-    const query = "INSERT INTO users SET username = ?, password = ?";
+  async create(user) {
+    const query = `INSERT INTO users SET ${this.#connection.escape(user)}`;
 
-    await this.#connection.execute(query, [username, password]);
+    await this.#connection.execute(query);
 
-    return { username, password };
+    const newUser = await this.findByUsername(user.username);
+
+    return newUser;
   }
 
-  async findOne(username) {
+  async findByUsername(username) {
     const query = "SELECT * FROM users WHERE username = ?";
 
     const res = await this.#connection.execute(query, [username]);
+
+    return res[0].length ? res[0][0] : null;
+  }
+
+  async findById(id) {
+    const query = "SELECT * FROM users WHERE id = ?";
+
+    const res = await this.#connection.execute(query, [id]);
 
     return res[0].length ? res[0][0] : null;
   }
@@ -27,30 +37,32 @@ class User {
     return res[0];
   }
 
-  async update(oldUsername, user) {
+  async update(userData, id) {
     const query = `UPDATE users SET ${this.#connection.escape(
-      user
-    )} WHERE username = ${this.#connection.escape(oldUsername)}`;
+      userData
+    )} WHERE id = ${this.#connection.escape(id)}`;
 
-    await this.#connection.execute(query, [user, oldUsername]);
+    await this.#connection.execute(query);
 
-    return user;
+    const updatedUser = await this.findById(id);
+
+    return updatedUser;
   }
 
-  async delete(username) {
-    const query = "DELETE FROM users WHERE username = ?";
+  async deleteById(id) {
+    const user = await this.findById(id);
 
-    const response = await this.#connection.execute(query, [username]);
-
-    if (!response[0].affectedRows) {
-      throw new Error(`No user found with username '${username}'`, {
+    if (!user) {
+      throw new Error(`No user found with id ${id}`, {
         cause: { code: 400 },
       });
     }
 
-    return {
-      username,
-    };
+    const query = "DELETE FROM users WHERE id = ?";
+
+    await this.#connection.execute(query, [id]);
+
+    return user;
   }
 
   async openConnection() {

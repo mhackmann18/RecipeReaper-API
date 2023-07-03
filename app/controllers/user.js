@@ -37,7 +37,7 @@ exports.register = requestWrapper(User, async (req, user) => {
 
   // Check if username already exists
 
-  const existingUser = await user.findOne(username);
+  const existingUser = await user.findByUsername(username);
 
   if (existingUser) {
     throw new Error("Username is already taken", { cause: { code: 400 } });
@@ -48,7 +48,7 @@ exports.register = requestWrapper(User, async (req, user) => {
   const salt = bcrypt.genSaltSync(10);
   const hash = bcrypt.hashSync(password, salt);
 
-  const newUser = await user.create({ username, password: hash });
+  const newUser = await user.create({ ...req.body, password: hash });
 
   newUser.token = jwt.sign({ username }, process.env.TOKEN_KEY, {
     expiresIn: "2h",
@@ -58,11 +58,11 @@ exports.register = requestWrapper(User, async (req, user) => {
 });
 
 exports.findOne = requestWrapper(User, async (req, user) => {
-  const existingUser = await user.findOne(req.params.username);
+  const existingUser = await user.findById(req.params.id);
 
   if (existingUser) return existingUser;
 
-  throw new Error(`No user found with username '${req.params.username}'`, {
+  throw new Error(`No user found with id '${req.params.id}'`, {
     cause: { code: 400 },
   });
 });
@@ -102,7 +102,7 @@ exports.login = requestWrapper(User, async (req, user) => {
 
   // Make sure user exists
 
-  const existingUser = await user.findOne(username);
+  const existingUser = await user.findByUsername(username);
 
   if (!existingUser) {
     throw new Error("No user exists with that username", {
@@ -125,8 +125,8 @@ exports.login = requestWrapper(User, async (req, user) => {
 
 // Protected
 exports.update = requestWrapper(User, async (req, db) => {
-  const updatedUser = {};
-  const oldUsername = req.params.username;
+  const newUserData = {};
+  const userId = req.params.id;
   const newUsername = req.body.username;
   const newPassword = req.body.password;
 
@@ -147,15 +147,15 @@ exports.update = requestWrapper(User, async (req, db) => {
   // Update theme
 
   if (req.body.theme) {
-    updatedUser.theme = req.body.theme;
+    newUserData.theme = req.body.theme;
   }
 
   // Check that user with old username exists
 
-  const oldUser = await db.findOne(oldUsername);
+  const oldUser = await db.findById(userId);
 
   if (!oldUser) {
-    throw new Error(`No user found with the username '${oldUsername}'`, {
+    throw new Error(`No user found with id '${userId}'`, {
       cause: { code: 400 },
     });
   }
@@ -163,13 +163,13 @@ exports.update = requestWrapper(User, async (req, db) => {
   // See if new username is available
 
   if (newUsername) {
-    const existingUser = await db.findOne(newUsername);
+    const existingUser = await db.findByUsername(newUsername);
 
-    if (existingUser && existingUser.username !== oldUsername) {
+    if (existingUser && existingUser.username !== oldUser.username) {
       throw new Error("Username is already taken", { cause: { code: 400 } });
     }
 
-    updatedUser.username = newUsername;
+    newUserData.username = newUsername;
   }
 
   // Generate new password hash
@@ -178,10 +178,10 @@ exports.update = requestWrapper(User, async (req, db) => {
     const salt = bcrypt.genSaltSync(10);
     const passwordHash = bcrypt.hashSync(newPassword, salt);
 
-    updatedUser.password = passwordHash;
+    newUserData.password = passwordHash;
   }
 
-  await db.update(req.params.username, updatedUser);
+  const updatedUser = await db.update(newUserData, userId);
 
   // Get updated token
 
@@ -195,7 +195,7 @@ exports.update = requestWrapper(User, async (req, db) => {
 });
 
 exports.delete = requestWrapper(User, async (req, user) => {
-  const oldUser = await user.delete(req.params.username);
+  const oldUser = await user.deleteById(req.params.id);
 
   return oldUser;
 });
