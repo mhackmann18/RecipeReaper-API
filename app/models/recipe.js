@@ -256,16 +256,10 @@ class Recipe {
         await this.updateInstructions(recipe.instructions, id);
       }
 
-      // Update nutrients
-      await this.#connection.execute(
-        "DELETE FROM nutrients WHERE recipe_id = ?",
-        [id]
-      );
+      // UPDATE NUTRIENTS
 
       if (recipe.nutrients && Object.keys(recipe.nutrients).length) {
-        await this.#connection.execute(
-          ...Recipe.createInsertNutrientsQuery(recipe.nutrients, id)
-        );
+        await this.updateNutrients(recipe.nutrients, id);
       }
 
       await this.#connection.commit();
@@ -329,6 +323,35 @@ class Recipe {
 
     res = await this.#connection.execute(
       "SELECT * FROM instructions WHERE recipe_id = ?",
+      [recipeId]
+    );
+
+    return res[0];
+  }
+
+  async updateNutrients(newNutrients, recipeId) {
+    let res = await this.#connection.execute(
+      "SELECT * FROM nutrients WHERE recipe_id = ?",
+      [recipeId]
+    );
+
+    if (res[0][0]) {
+      await this.#connection.execute(
+        `UPDATE nutrients SET ${this.#connection.escape(
+          newNutrients
+        )} WHERE recipe_id = ${this.#connection.escape(recipeId)}`
+      );
+    } else {
+      await this.#connection.execute(
+        `INSERT INTO nutrients SET ${this.#connection.escape({
+          ...newNutrients,
+          recipe_id: recipeId,
+        })}`
+      );
+    }
+
+    res = this.#connection.execute(
+      "SELECT * FROM nutrients WHERE recipe_id = ?",
       [recipeId]
     );
 
