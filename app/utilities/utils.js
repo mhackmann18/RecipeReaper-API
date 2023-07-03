@@ -15,9 +15,7 @@ exports.requestWrapper = (Model, fn) => async (req, res) => {
 
   try {
     await user.openConnection();
-    console.log(
-      `${req.method} ${req.url} ${req.user && req.user.username}`.yellow
-    );
+    console.log(`${req.method} ${req.url}`.yellow);
     const data = await fn(req, user);
     res.send(data);
     console.log("Successfully completed request".green);

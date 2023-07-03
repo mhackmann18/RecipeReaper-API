@@ -8,11 +8,10 @@ class Recipe {
 
   async create(newRecipe) {
     const query =
-      "INSERT INTO recipes SET id = ?, username = ?, title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ?";
+      "INSERT INTO recipes SET user_id = ?, title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ?";
 
     const values = [
-      newRecipe.id,
-      newRecipe.username,
+      newRecipe.user_id,
       newRecipe.title,
       newRecipe.servings,
       newRecipe.serving_size,
@@ -24,14 +23,16 @@ class Recipe {
       await this.#connection.beginTransaction();
 
       // Create recipe
-      await this.#connection.execute(query, values);
+      const recipe = await this.#connection.execute(query, values);
+
+      const recipeId = recipe[0].insertId;
 
       // Create ingredients
       if (newRecipe.ingredients && newRecipe.ingredients.length) {
         await this.#connection.execute(
           ...Recipe.createInsertIngredientsQuery(
             newRecipe.ingredients,
-            newRecipe.id
+            recipeId
           )
         );
       }
@@ -41,7 +42,7 @@ class Recipe {
         await this.#connection.execute(
           ...Recipe.createInsertInstructionsQuery(
             newRecipe.instructions,
-            newRecipe.id
+            recipeId
           )
         );
       }
@@ -49,16 +50,15 @@ class Recipe {
       // Create nutrients
       if (newRecipe.nutrients && Object.keys(newRecipe.nutrients).length) {
         await this.#connection.execute(
-          ...Recipe.createInsertNutrientsQuery(
-            newRecipe.nutrients,
-            newRecipe.id
-          )
+          ...Recipe.createInsertNutrientsQuery(newRecipe.nutrients, recipeId)
         );
       }
 
       await this.#connection.commit();
 
-      return newRecipe;
+      const createdRecipe = await this.findById(recipeId);
+
+      return createdRecipe;
     } catch (error) {
       await this.#connection.rollback();
       throw error;
@@ -258,18 +258,18 @@ class Recipe {
   static createInsertIngredientsQuery(ingredients, recipeId) {
     // Build an sql query string
     let query =
-      "INSERT INTO ingredients (id, quantity, unit, name, recipe_id) VALUES ";
+      "INSERT INTO ingredients (quantity, unit, name, recipe_id) VALUES ";
     let values = [];
 
     for (let i = 0; i < ingredients.length; i++) {
-      const { quantity, unit, name, id } = ingredients[i];
-      if (!quantity || !unit || !name || !id) {
+      const { quantity, unit, name } = ingredients[i];
+      if (!quantity || !unit || !name) {
         throw new Error(
-          "ingredient fields 'id', 'quantity', 'unit', and 'name' are required"
+          "ingredient fields 'quantity', 'unit', and 'name' are required"
         );
       }
-      values = [...values, id, quantity, unit, name, recipeId];
-      query += "(?, ?, ?, ?, ?)";
+      values = [...values, quantity, unit, name, recipeId];
+      query += "(?, ?, ?, ?)";
       query += i !== ingredients.length - 1 ? ", " : ";";
     }
 
