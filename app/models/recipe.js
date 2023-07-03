@@ -140,6 +140,86 @@ class Recipe {
     return res[0];
   }
 
+  async removeIngredientById(ingredientId) {
+    const query = "DELETE FROM ingredients WHERE id = ?";
+
+    await this.#connection.execute(query, [ingredientId]);
+
+    return { message: "Successfully deleted ingredient" };
+  }
+
+  async updateIngredients(ingredients, recipeId) {
+    const newIngredients = ingredients;
+
+    // Get recipe's old ingredients
+
+    let res = await this.#connection.execute(
+      "SELECT * FROM ingredients WHERE recipe_id = ?",
+      [recipeId]
+    );
+
+    const oldIngredients = res[0];
+
+    const actions = [];
+
+    // Remove all ingredients that weren't included in the ingredients param
+
+    for (const oldIngredient of oldIngredients) {
+      let found = false;
+      for (const newIngredient of newIngredients) {
+        if (oldIngredient.name === newIngredient.name) {
+          found = true;
+        }
+      }
+      if (!found) {
+        actions.push(this.removeIngredientById(oldIngredient.id));
+      }
+    }
+
+    // For each ingredient check if it exists in the recipe.
+    // If it does, update it, if it doesn't, create it
+    for (const newIngredient of newIngredients) {
+      let id = null;
+
+      for (const oldIngredient of oldIngredients) {
+        if (newIngredient.name === oldIngredient.name) {
+          id = oldIngredient.id;
+        }
+      }
+
+      // Ingredient already exists. Update it
+      if (id) {
+        actions.push(
+          this.#connection.execute(
+            `UPDATE ingredients SET ${this.#connection.escape(
+              newIngredient
+            )} WHERE id = ${this.#connection.escape(id)}`
+          )
+        );
+      }
+      // Ingredient doesn't exist yet. Create it
+      else {
+        actions.push(
+          this.#connection.execute(
+            `INSERT INTO ingredients SET ${this.#connection.escape({
+              ...newIngredient,
+              recipe_id: recipeId,
+            })}`
+          )
+        );
+      }
+    }
+
+    await Promise.all(actions);
+
+    res = await this.#connection.execute(
+      "SELECT * FROM ingredients WHERE recipe_id = ?",
+      [recipeId]
+    );
+
+    return res[0];
+  }
+
   async updateById(recipe, id) {
     const query =
       "UPDATE recipes SET title = ?, servings = ?, serving_size = ?, prep_time = ?, cook_time = ? WHERE id = ?";
@@ -156,7 +236,8 @@ class Recipe {
     try {
       await this.#connection.beginTransaction();
 
-      // Update recipe
+      // UPDATE RECIPE
+
       const res = await this.#connection.execute(query, values);
 
       if (!res[0].affectedRows) {
@@ -165,19 +246,14 @@ class Recipe {
         });
       }
 
-      // Update ingredients
-      await this.#connection.execute(
-        "DELETE FROM ingredients WHERE recipe_id = ?",
-        [id]
-      );
+      // UPDATE INGREDIENTS
 
       if (recipe.ingredients && recipe.ingredients.length) {
-        await this.#connection.execute(
-          ...Recipe.createInsertIngredientsQuery(recipe.ingredients, id)
-        );
+        await this.updateIngredients(recipe.ingredients, id);
       }
 
-      // Update instructions
+      // UPDATE INSTRUCTIONS
+
       await this.#connection.execute(
         "DELETE FROM instructions WHERE recipe_id = ?",
         [id]
@@ -203,7 +279,9 @@ class Recipe {
 
       await this.#connection.commit();
 
-      return recipe;
+      const updatedRecipe = await this.findById(id);
+
+      return updatedRecipe;
     } catch (err) {
       await this.#connection.rollback();
       throw err;

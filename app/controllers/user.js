@@ -87,11 +87,13 @@ exports.login = requestWrapper(User, async (req, user) => {
       cause: { code: 400 },
     });
   }
+
   if (!password) {
     throw new Error("'password' property is required", {
       cause: { code: 400 },
     });
   }
+
   for (const name of Object.keys(req.body)) {
     if (name !== "password" && name !== "username") {
       throw new Error(`Unknown property '${name}' provided`, {
