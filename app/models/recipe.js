@@ -148,9 +148,7 @@ class Recipe {
     return { message: "Successfully deleted ingredient" };
   }
 
-  async updateIngredients(ingredients, recipeId) {
-    const newIngredients = ingredients;
-
+  async updateIngredients(newIngredients, recipeId) {
     // Get recipe's old ingredients
 
     let res = await this.#connection.execute(
@@ -254,15 +252,8 @@ class Recipe {
 
       // UPDATE INSTRUCTIONS
 
-      await this.#connection.execute(
-        "DELETE FROM instructions WHERE recipe_id = ?",
-        [id]
-      );
-
       if (recipe.instructions && recipe.instructions.length) {
-        await this.#connection.execute(
-          ...Recipe.createInsertInstructionsQuery(recipe.instructions, id)
-        );
+        await this.updateInstructions(recipe.instructions, id);
       }
 
       // Update nutrients
@@ -286,6 +277,62 @@ class Recipe {
       await this.#connection.rollback();
       throw err;
     }
+  }
+
+  async updateInstructions(newInstructions, recipeId) {
+    const actions = [];
+
+    // Delete all old instructions whose step number is greater than the max
+    // step number from the new instructions
+    const maxStepNum = Math.max(...newInstructions.map((el) => el.step));
+
+    let res = await this.#connection.execute(
+      "SELECT * FROM instructions WHERE step > ? AND recipe_id = ?",
+      [maxStepNum, recipeId]
+    );
+
+    for (const voidInstruction of res[0]) {
+      actions.push(
+        this.#connection.execute("DELETE FROM instructions WHERE id = ?", [
+          voidInstruction.id,
+        ])
+      );
+    }
+
+    // Update instructions
+    res = await this.#connection.execute(
+      "SELECT MAX(step) FROM instructions WHERE recipe_id = ?",
+      [recipeId]
+    );
+
+    const oldMaxStep = (res[0] && res[0][0] && res[0][0]["MAX(step)"]) || -1;
+
+    for (const newInstruction of newInstructions) {
+      if (newInstruction.step <= oldMaxStep) {
+        actions.push(
+          this.#connection.execute(
+            "UPDATE instructions SET text = ? WHERE recipe_id = ? AND step = ?",
+            [newInstruction.text, recipeId, newInstruction.step]
+          )
+        );
+      } else {
+        actions.push(
+          this.#connection.execute(
+            "INSERT INTO instructions SET step = ?, text = ?, recipe_id = ?",
+            [newInstruction.step, newInstruction.text, recipeId]
+          )
+        );
+      }
+    }
+
+    await Promise.all(actions);
+
+    res = await this.#connection.execute(
+      "SELECT * FROM instructions WHERE recipe_id = ?",
+      [recipeId]
+    );
+
+    return res[0];
   }
 
   async remove(id) {
