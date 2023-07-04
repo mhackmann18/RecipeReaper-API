@@ -27,4 +27,14 @@ const verifyToken = (checkPrivilegesFn) => (req, res, next) => {
   return next();
 };
 
-module.exports = verifyToken;
+exports.restrictAllUsers = verifyToken(() => false);
+
+exports.allowUserWithSameId = verifyToken(
+  (user, req) => user.id === Number(req.params.id)
+);
+
+exports.allowRecipeOwner = verifyToken(
+  (user, req) => user.id === req.body.user_id
+);
+
+exports.allowAllUsers = verifyToken();
