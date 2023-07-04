@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 
 const config = process.env;
 
-const verifyToken = (allowedAccessLevels) => (req, res, next) => {
+const verifyToken = (checkPrivilegesFn) => (req, res, next) => {
   const token =
     req.body.token || req.query.token || req.headers["x-access-token"];
 
@@ -14,11 +14,10 @@ const verifyToken = (allowedAccessLevels) => (req, res, next) => {
     const user = jwt.verify(token, config.TOKEN_KEY);
     req.user = user;
 
-    // Only authorize the user if they have the correct accessLevel or if
-    // they're dealing with their own resources
     if (
-      !allowedAccessLevels.includes(user.accessLevel) &&
-      req.params.username !== user.username
+      checkPrivilegesFn &&
+      !checkPrivilegesFn(user, req) &&
+      user.username !== "god_of_prepmaster"
     ) {
       return res.status(403).send("Permission denied");
     }

@@ -50,9 +50,13 @@ exports.register = requestWrapper(User, async (req, user) => {
 
   const newUser = await user.create({ ...req.body, password: hash });
 
-  newUser.token = jwt.sign({ username }, process.env.TOKEN_KEY, {
-    expiresIn: "2h",
-  });
+  newUser.token = jwt.sign(
+    { username, id: newUser.id },
+    process.env.TOKEN_KEY,
+    {
+      expiresIn: "2h",
+    }
+  );
 
   return newUser;
 });
@@ -115,9 +119,13 @@ exports.login = requestWrapper(User, async (req, user) => {
   // Validate user password and login
 
   if (await bcrypt.compare(password, existingUser.password)) {
-    existingUser.token = jwt.sign({ username }, process.env.TOKEN_KEY, {
-      expiresIn: "2h",
-    });
+    existingUser.token = jwt.sign(
+      { username, id: existingUser.id },
+      process.env.TOKEN_KEY,
+      {
+        expiresIn: "2h",
+      }
+    );
 
     return existingUser;
   }
@@ -188,9 +196,13 @@ exports.update = requestWrapper(User, async (req, db) => {
   // Get updated token
 
   if (newUsername) {
-    updatedUser.token = jwt.sign({ newUsername }, process.env.TOKEN_KEY, {
-      expiresIn: "2h",
-    });
+    updatedUser.token = jwt.sign(
+      { newUsername, id: updatedUser.id },
+      process.env.TOKEN_KEY,
+      {
+        expiresIn: "2h",
+      }
+    );
   }
 
   return updatedUser;

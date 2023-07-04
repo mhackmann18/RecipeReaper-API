@@ -1,9 +1,8 @@
-// const auth = require("../middleware/auth");
+const auth = require("../middleware/auth");
 
-// Permission levels:
-// public
-// user
-// admin
+const restrictAllUsers = () => false;
+
+const allowUserWithSameId = (user, req) => user.id === Number(req.params.id);
 
 module.exports = (app) => {
   const users = require("../controllers/user");
@@ -11,10 +10,10 @@ module.exports = (app) => {
   const router = require("express").Router();
 
   // Get a single user
-  router.get("/:id", users.findOne);
+  router.get("/:id", auth(allowUserWithSameId), users.findOne);
 
   // Get all users
-  router.get("/", users.findAll);
+  router.get("/", auth(restrictAllUsers), users.findAll);
 
   // Register a new user
   router.post("/register", users.register);
@@ -23,10 +22,10 @@ module.exports = (app) => {
   router.post("/login", users.login);
 
   // Update user info
-  router.put("/:id", users.update);
+  router.put("/:id", auth(allowUserWithSameId), users.update);
 
   // Delete user
-  router.delete("/:id", users.delete);
+  router.delete("/:id", auth(allowUserWithSameId), users.delete);
 
   app.use("/api/users", router);
 };
