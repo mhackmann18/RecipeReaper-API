@@ -395,14 +395,12 @@ class Recipe {
   }
 
   async remove(id) {
+    const deletedRecipe = await this.findById(id);
+
     const query = "DELETE FROM recipes WHERE id = ?";
-    const res = await this.#connection.execute(query, [id]);
+    await this.#connection.execute(query, [id]);
 
-    if (!res[0].affectedRows) {
-      throw new Error(`Recipe with id '${id}' doesn't exist`);
-    }
-
-    return { id };
+    return deletedRecipe;
   }
 
   async removeAll() {

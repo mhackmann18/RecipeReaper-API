@@ -46,8 +46,6 @@ exports.findAll = requestWrapper(Recipe, async (req, recipe) => {
 exports.findOne = requestWrapper(Recipe, async (req, recipe) => {
   const existingRecipe = await recipe.findById(req.params.id);
 
-  delete existingRecipe.user_id;
-
   return existingRecipe;
 });
 
