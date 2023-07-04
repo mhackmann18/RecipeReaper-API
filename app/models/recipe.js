@@ -444,11 +444,6 @@ class Recipe {
 
     for (let i = 0; i < ingredients.length; i++) {
       const { quantity, unit, name } = ingredients[i];
-      if (!quantity || !unit || !name) {
-        throw new Error(
-          "ingredient fields 'quantity', 'unit', and 'name' are required"
-        );
-      }
       values = [...values, quantity, unit, name, recipeId];
       query += "(?, ?, ?, ?)";
       query += i !== ingredients.length - 1 ? ", " : ";";
