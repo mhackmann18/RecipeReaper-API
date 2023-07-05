@@ -14,7 +14,10 @@ const verifyToken = (checkPrivilegesFn) => (req, res, next) => {
     const user = jwt.verify(token, config.TOKEN_KEY);
     req.user = user;
 
-    if (!checkPrivilegesFn(req) && user.username !== "god_of_prepmaster") {
+    if (
+      !checkPrivilegesFn(req) &&
+      user.username !== process.env.ADMIN_USERNAME
+    ) {
       return res.status(403).send("Permission denied");
     }
   } catch (err) {

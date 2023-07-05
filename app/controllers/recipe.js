@@ -37,7 +37,13 @@ exports.create = requestWrapper(Recipe, async (req, recipe) => {
 
 // Retrieve all recipes
 exports.findAll = requestWrapper(Recipe, async (req, recipe) => {
-  const recipes = await recipe.findAll();
+  let recipes;
+
+  if (req.user.username !== process.env.ADMIN_USERNAME) {
+    recipes = await recipe.findByUser(req.user.id);
+  } else {
+    recipes = await recipe.findAll();
+  }
 
   return recipes;
 });
@@ -56,7 +62,6 @@ exports.findOne = requestWrapper(Recipe, async (req, recipe) => {
   return existingRecipe;
 });
 
-//
 // Update a Recipe identified by the id in the request
 exports.update = requestWrapper(Recipe, async (req, recipe) => {
   // Validate Request
@@ -75,7 +80,6 @@ exports.update = requestWrapper(Recipe, async (req, recipe) => {
   return updatedRecipe;
 });
 
-//
 // Delete a Recipe with the specified id in the request
 exports.delete = requestWrapper(Recipe, async (req, recipe) => {
   // Validate request

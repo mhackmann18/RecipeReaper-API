@@ -147,6 +147,41 @@ class Recipe {
     return res[0];
   }
 
+  async findByUser(userId) {
+    const query = `SELECT r.*, 
+    (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', i.id, 'quantity', i.quantity, 'unit', i.unit, 'name', i.name))
+      FROM ingredients AS i
+      WHERE i.recipe_id = r.id
+      GROUP BY i.recipe_id) AS ingredients,
+    (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', instr.id, 'step', instr.step, 'text', instr.text))
+      FROM instructions AS instr
+      WHERE instr.recipe_id = r.id
+      GROUP BY instr.recipe_id) AS instructions,
+    (SELECT JSON_OBJECT(
+    'calories', n.calories,
+    'fat', n.fat,
+    'saturated_fat', n.saturated_fat,
+    'unsaturated_fat', n.unsaturated_fat,
+    'trans_fat', n.trans_fat,
+    'carbohydrate', n.carbohydrate,
+    'protein', n.protein,
+    'sugar', n.sugar,
+    'cholesterol', n.cholesterol,
+    'sodium', n.sodium,
+    'fiber', n.fiber)
+      FROM nutrients AS n
+      WHERE n.recipe_id = r.id
+      GROUP BY n.recipe_id) AS nutrients
+    FROM recipes AS r
+    LEFT JOIN ingredients AS i ON r.id = i.recipe_id
+    WHERE r.user_id = ${this.#connection.escape(userId)}
+    GROUP BY r.id`;
+
+    const res = await this.#connection.execute(query);
+
+    return res[0];
+  }
+
   async removeIngredientById(ingredientId) {
     const query = "DELETE FROM ingredients WHERE id = ?";
 

@@ -9,7 +9,7 @@ module.exports = (app) => {
   router.post("/", allowAllUsers, recipes.create);
 
   // Get all recipes
-  router.get("/", restrictAllUsers, recipes.findAll);
+  router.get("/", allowAllUsers, recipes.findAll);
 
   // Get a single recipe by its id
   // Controller method will send 403 if recipe isn't owned by the user
