@@ -44,11 +44,19 @@ exports.findAll = requestWrapper(Recipe, async (req, recipe) => {
 
 // Find a single Recipe with an id
 exports.findOne = requestWrapper(Recipe, async (req, recipe) => {
+  // Validate request
+  if (!(await recipe.isOwner(req.params.id, req.user.id))) {
+    throw new Error("Permission denied: You are not the owner of this recipe", {
+      cause: { code: 403 },
+    });
+  }
+
   const existingRecipe = await recipe.findById(req.params.id);
 
   return existingRecipe;
 });
 
+//
 // Update a Recipe identified by the id in the request
 exports.update = requestWrapper(Recipe, async (req, recipe) => {
   // Validate Request
@@ -56,13 +64,27 @@ exports.update = requestWrapper(Recipe, async (req, recipe) => {
     throw new Error("Content cannot be empty", { cause: { code: 400 } });
   }
 
+  if (!(await recipe.isOwner(req.params.id, req.user.id))) {
+    throw new Error("Permission denied: You are not the owner of this recipe", {
+      cause: { code: 403 },
+    });
+  }
+
   const updatedRecipe = await recipe.updateById(req.body, req.params.id);
 
   return updatedRecipe;
 });
 
+//
 // Delete a Recipe with the specified id in the request
 exports.delete = requestWrapper(Recipe, async (req, recipe) => {
+  // Validate request
+  if (!(await recipe.isOwner(req.params.id, req.user.id))) {
+    throw new Error("Permission denied: You are not the owner of this recipe", {
+      cause: { code: 403 },
+    });
+  }
+
   const deletedRecipe = await recipe.remove(req.params.id);
 
   return deletedRecipe;

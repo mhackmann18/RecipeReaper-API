@@ -490,6 +490,15 @@ class Recipe {
     return [query, columnValues];
   }
 
+  async isOwner(recipeId, userId) {
+    const res = await this.#connection.execute(
+      "SELECT * FROM recipes WHERE id = ? AND user_id = ?",
+      [recipeId, userId]
+    );
+
+    return Boolean(res[0].length);
+  }
+
   async openConnection() {
     this.#connection = await connectToDB();
   }

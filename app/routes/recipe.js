@@ -1,8 +1,4 @@
-const {
-  restrictAllUsers,
-  allowUserWithSameId,
-  allowAllUsers,
-} = require("../middleware/auth");
+const { restrictAllUsers, allowAllUsers } = require("../middleware/auth");
 
 module.exports = (app) => {
   const recipes = require("../controllers/recipe");
@@ -16,13 +12,16 @@ module.exports = (app) => {
   router.get("/", restrictAllUsers, recipes.findAll);
 
   // Get a single recipe by its id
-  router.get("/:id", allowUserWithSameId, recipes.findOne);
+  // Controller method will send 403 if recipe isn't owned by the user
+  router.get("/:id", allowAllUsers, recipes.findOne);
 
   // Update a recipe by its id
-  router.put("/:id", allowUserWithSameId, recipes.update);
+  // Controller method will send 403 if recipe isn't owned by the user
+  router.put("/:id", allowAllUsers, recipes.update);
 
   // Delete a recipe by its id
-  router.delete("/:id", allowUserWithSameId, recipes.delete);
+  // Controller method will send 403 if recipe isn't owned by the user
+  router.delete("/:id", allowAllUsers, recipes.delete);
 
   // Delete all recipes
   router.delete("/", restrictAllUsers, recipes.deleteAll);

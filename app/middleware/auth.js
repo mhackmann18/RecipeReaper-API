@@ -14,27 +14,39 @@ const verifyToken = (checkPrivilegesFn) => (req, res, next) => {
     const user = jwt.verify(token, config.TOKEN_KEY);
     req.user = user;
 
-    if (
-      checkPrivilegesFn &&
-      !checkPrivilegesFn(user, req) &&
-      user.username !== "god_of_prepmaster"
-    ) {
+    if (!checkPrivilegesFn(req) && user.username !== "god_of_prepmaster") {
       return res.status(403).send("Permission denied");
     }
   } catch (err) {
+    console.log(err.message.red);
     return res.status(401).send("Invalid Token");
   }
   return next();
 };
 
+exports.allowAllUsers = verifyToken(() => true);
+
 exports.restrictAllUsers = verifyToken(() => false);
 
 exports.allowUserWithSameId = verifyToken(
-  (user, req) => user.id === Number(req.params.id)
+  (req) => req.user.id === Number(req.params.id)
 );
 
-exports.allowRecipeOwner = verifyToken(
-  (user, req) => user.id === req.body.user_id
-);
+// exports.allowRecipeOwner = verifyToken(async (user, req) => {
+//   const recipeId = req.params.id;
+//   const userId = req.user.id;
 
-exports.allowAllUsers = verifyToken();
+//   const db = new Recipe();
+
+//   try {
+//     await db.openConnection();
+
+//     const query = "SELECT * FROM recipes WHERE user_id = ? AND id = ?";
+
+//     const res = await db.
+//   } catch (error) {
+//     throw new Error(error);
+//   } finally {
+//     db.closeConnection();
+//   }
+// });
