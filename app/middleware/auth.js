@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const { printErrMsg } = require("../utilities/utils");
 
 const config = process.env;
 
@@ -20,8 +21,8 @@ const verifyToken = (checkPrivilegesFn) => (req, res, next) => {
     ) {
       return res.status(403).send("Permission denied");
     }
-  } catch (err) {
-    console.log(`Error: ${err.message}`.red);
+  } catch (error) {
+    printErrMsg(error);
     return res.status(401).send("Invalid Token");
   }
   return next();
