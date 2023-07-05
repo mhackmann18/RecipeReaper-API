@@ -21,7 +21,7 @@ const verifyToken = (checkPrivilegesFn) => (req, res, next) => {
       return res.status(403).send("Permission denied");
     }
   } catch (err) {
-    console.log(err.message.red);
+    console.log(`Error: ${err.message}`.red);
     return res.status(401).send("Invalid Token");
   }
   return next();

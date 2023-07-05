@@ -3,6 +3,7 @@ require("colors");
 require("dotenv").config({ path: `${__dirname}/config.env` });
 const express = require("express");
 const cors = require("cors");
+const logRequest = require("./app/middleware/logRequest");
 
 const app = express();
 
@@ -19,6 +20,8 @@ app.use(express.json());
 
 // parse requests of content-type - application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: true }));
+
+app.use(logRequest);
 
 // simple route
 app.get("/", (req, res) => {
