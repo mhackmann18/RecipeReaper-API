@@ -1,6 +1,9 @@
 const logRequest = (req, res, next) => {
-  console.log(req);
-  console.log(`${req.method} ${req.url}`.yellow);
+  console.log(
+    `Method: ${req.method.bold}  Endpoint: ${req.url.bold}  User: ${
+      (req.user ? req.user.username : "none").bold
+    }`.yellow
+  );
   return next();
 };
 
