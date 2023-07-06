@@ -3,7 +3,7 @@ const Recipe = require("../models/Recipe");
 const { requestWrapper } = require("../utilities/utils");
 
 // Create and Save a new recipe
-exports.create = requestWrapper(Recipe, async (req, recipe) => {
+exports.create = requestWrapper(Recipe, async (req, res, recipe) => {
   // Validate request
 
   if (!req.body || !Object.keys(req.body).length) {
@@ -36,7 +36,7 @@ exports.create = requestWrapper(Recipe, async (req, recipe) => {
 });
 
 // Retrieve all recipes
-exports.findAll = requestWrapper(Recipe, async (req, recipe) => {
+exports.findAll = requestWrapper(Recipe, async (req, res, recipe) => {
   let recipes;
 
   if (req.user.username !== process.env.ADMIN_USERNAME) {
@@ -49,7 +49,7 @@ exports.findAll = requestWrapper(Recipe, async (req, recipe) => {
 });
 
 // Find a single Recipe with an id
-exports.findOne = requestWrapper(Recipe, async (req, recipe) => {
+exports.findOne = requestWrapper(Recipe, async (req, res, recipe) => {
   // Validate request
   if (!(await recipe.isOwner(req.params.id, req.user.id))) {
     throw new Error("Permission denied: You are not the owner of this recipe", {
@@ -63,7 +63,7 @@ exports.findOne = requestWrapper(Recipe, async (req, recipe) => {
 });
 
 // Update a Recipe identified by the id in the request
-exports.update = requestWrapper(Recipe, async (req, recipe) => {
+exports.update = requestWrapper(Recipe, async (req, res, recipe) => {
   // Validate Request
   if (!req.body) {
     throw new Error("Content cannot be empty", { cause: { code: 400 } });
@@ -81,7 +81,7 @@ exports.update = requestWrapper(Recipe, async (req, recipe) => {
 });
 
 // Delete a Recipe with the specified id in the request
-exports.delete = requestWrapper(Recipe, async (req, recipe) => {
+exports.delete = requestWrapper(Recipe, async (req, res, recipe) => {
   // Validate request
   if (!(await recipe.isOwner(req.params.id, req.user.id))) {
     throw new Error("Permission denied: You are not the owner of this recipe", {
@@ -95,7 +95,7 @@ exports.delete = requestWrapper(Recipe, async (req, recipe) => {
 });
 
 // Delete all recipes from the database.
-exports.deleteAll = requestWrapper(Recipe, async (req, recipe) => {
+exports.deleteAll = requestWrapper(Recipe, async (req, res, recipe) => {
   const data = await recipe.removeAll();
 
   return data;

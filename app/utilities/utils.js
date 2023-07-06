@@ -11,7 +11,7 @@ exports.requestWrapper = (Model, fn) => async (req, res) => {
 
   try {
     await user.openConnection();
-    const data = await fn(req, user);
+    const data = await fn(req, res, user);
     res.send(data);
     this.printSuccessMsg();
   } catch (error) {

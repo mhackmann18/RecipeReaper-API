@@ -6,7 +6,7 @@ require("dotenv").config({ path: `${__dirname}/config.env` });
 
 const { requestWrapper } = utils;
 
-exports.register = requestWrapper(User, async (req, user) => {
+exports.register = requestWrapper(User, async (req, res, user) => {
   // Validate request
 
   if (!req.body) {
@@ -61,7 +61,7 @@ exports.register = requestWrapper(User, async (req, user) => {
   return newUser;
 });
 
-exports.findOne = requestWrapper(User, async (req, user) => {
+exports.findOne = requestWrapper(User, async (req, res, user) => {
   const existingUser = await user.findById(req.params.id);
 
   if (existingUser) return existingUser;
@@ -71,13 +71,13 @@ exports.findOne = requestWrapper(User, async (req, user) => {
   });
 });
 
-exports.findAll = requestWrapper(User, async (req, user) => {
+exports.findAll = requestWrapper(User, async (req, res, user) => {
   const users = await user.findAll();
 
   return users;
 });
 
-exports.login = requestWrapper(User, async (req, user) => {
+exports.login = requestWrapper(User, async (req, res, user) => {
   // Validate request
 
   if (!req.body) {
@@ -134,7 +134,7 @@ exports.login = requestWrapper(User, async (req, user) => {
 });
 
 // Protected
-exports.update = requestWrapper(User, async (req, db) => {
+exports.update = requestWrapper(User, async (req, res, db) => {
   const newUserData = {};
   const userId = req.params.id;
   const newUsername = req.body.username;
@@ -208,7 +208,7 @@ exports.update = requestWrapper(User, async (req, db) => {
   return updatedUser;
 });
 
-exports.delete = requestWrapper(User, async (req, user) => {
+exports.delete = requestWrapper(User, async (req, res, user) => {
   const oldUser = await user.deleteById(req.params.id);
 
   return oldUser;
