@@ -7,10 +7,10 @@ const logRequest = require("./app/middleware/logRequest");
 
 const app = express();
 
-const { PORT } = process.env;
+const { CORS_ORIGIN, PORT } = process.env;
 
 const corsOptions = {
-  origin: `http://localhost:${PORT + 1}`,
+  origin: `http://localhost:${CORS_ORIGIN}`,
 };
 
 app.use(cors(corsOptions));
