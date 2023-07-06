@@ -35,22 +35,3 @@ exports.restrictAllUsers = verifyToken(() => false);
 exports.allowUserWithSameId = verifyToken(
   (req) => req.user.id === Number(req.params.id)
 );
-
-// exports.allowRecipeOwner = verifyToken(async (user, req) => {
-//   const recipeId = req.params.id;
-//   const userId = req.user.id;
-
-//   const db = new Recipe();
-
-//   try {
-//     await db.openConnection();
-
-//     const query = "SELECT * FROM recipes WHERE user_id = ? AND id = ?";
-
-//     const res = await db.
-//   } catch (error) {
-//     throw new Error(error);
-//   } finally {
-//     db.closeConnection();
-//   }
-// });
