@@ -19,6 +19,7 @@ const verifyToken = (checkPrivilegesFn) => (req, res, next) => {
       !checkPrivilegesFn(req) &&
       user.username !== process.env.ADMIN_USERNAME
     ) {
+      printErrMsg({ message: "Permission denied" });
       return res.status(403).send("Permission denied");
     }
   } catch (error) {

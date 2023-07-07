@@ -6,6 +6,16 @@ require("dotenv").config({ path: `${__dirname}/config.env` });
 
 const { requestWrapper } = utils;
 
+exports.getSelf = requestWrapper(User, async (req, res, user) => {
+  const existingUser = await user.findById(req.user.id);
+
+  if (existingUser) return existingUser;
+
+  throw new Error(`No user found with id '${req.user.id}'`, {
+    cause: { code: 400 },
+  });
+});
+
 exports.register = requestWrapper(User, async (req, res, user) => {
   // Validate request
 

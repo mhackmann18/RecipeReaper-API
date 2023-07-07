@@ -1,9 +1,16 @@
-const { allowUserWithSameId, restrictAllUsers } = require("../middleware/auth");
+const {
+  allowUserWithSameId,
+  restrictAllUsers,
+  allowAllUsers,
+} = require("../middleware/auth");
 
 module.exports = (app) => {
   const users = require("../controllers/user");
 
   const router = require("express").Router();
+
+  // Get a single user from their token
+  router.get("/self", allowAllUsers, users.getSelf);
 
   // Get a single user
   router.get("/:id", allowUserWithSameId, users.findOne);
