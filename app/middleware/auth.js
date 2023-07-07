@@ -8,7 +8,10 @@ const verifyToken = (checkPrivilegesFn) => (req, res, next) => {
     req.body.token || req.query.token || req.headers["x-access-token"];
 
   if (!token) {
-    return res.status(403).send("A token is required for authentication");
+    printErrMsg({ message: "A token is required for authentication" });
+    return res
+      .status(403)
+      .send({ message: "A token is required for authentication" });
   }
 
   try {
@@ -20,11 +23,11 @@ const verifyToken = (checkPrivilegesFn) => (req, res, next) => {
       user.username !== process.env.ADMIN_USERNAME
     ) {
       printErrMsg({ message: "Permission denied" });
-      return res.status(403).send("Permission denied");
+      return res.status(403).send({ message: "Permission denied" });
     }
   } catch (error) {
     printErrMsg(error);
-    return res.status(401).send("Invalid Token");
+    return res.status(401).send({ message: "Invalid Token" });
   }
   return next();
 };
