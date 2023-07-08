@@ -100,7 +100,8 @@ class Recipe {
     FROM recipes AS r
     LEFT JOIN ingredients AS i ON r.id = i.recipe_id
     WHERE r.id = ${this.#connection.escape(id)}
-    GROUP BY r.id`;
+    GROUP BY r.id
+    ORDER BY r.title ASC`;
 
     const res = await this.#connection.execute(query);
 
@@ -140,7 +141,8 @@ class Recipe {
       GROUP BY n.recipe_id) AS nutrients
     FROM recipes AS r
     LEFT JOIN ingredients AS i ON r.id = i.recipe_id
-    GROUP BY r.id`;
+    GROUP BY r.id
+    ORDER BY r.title ASC`;
 
     const res = await this.#connection.execute(query);
 
@@ -175,7 +177,8 @@ class Recipe {
     FROM recipes AS r
     LEFT JOIN ingredients AS i ON r.id = i.recipe_id
     WHERE r.user_id = ${this.#connection.escape(userId)}
-    GROUP BY r.id`;
+    GROUP BY r.id
+    ORDER BY r.title ASC`;
 
     const res = await this.#connection.execute(query);
 
