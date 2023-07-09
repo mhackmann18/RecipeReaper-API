@@ -194,7 +194,7 @@ exports.update = requestWrapper(User, async (req, res, db) => {
 
   // Generate new password hash
 
-  if (!(await bcrypt.compare(newPassword, oldUser.password))) {
+  if (newPassword && !(await bcrypt.compare(newPassword, oldUser.password))) {
     const salt = bcrypt.genSaltSync(10);
     const passwordHash = bcrypt.hashSync(newPassword, salt);
 
