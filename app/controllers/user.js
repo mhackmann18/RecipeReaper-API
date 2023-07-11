@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const cookie = require("cookie");
 const utils = require("../utilities/utils");
 const User = require("../models/User");
 require("dotenv").config({ path: `${__dirname}/config.env` });
@@ -60,12 +61,19 @@ exports.register = requestWrapper(User, async (req, res, user) => {
 
   const newUser = await user.create({ ...req.body, password: hash });
 
-  newUser.token = jwt.sign(
-    { username, id: newUser.id },
-    process.env.TOKEN_KEY,
-    {
-      expiresIn: "2h",
-    }
+  const token = jwt.sign({ username, id: newUser.id }, process.env.TOKEN_KEY, {
+    expiresIn: "2h",
+  });
+
+  res.setHeader(
+    "Set-Cookie",
+    cookie.serialize("token", token, {
+      httpOnly: true,
+      maxAge: 60 * 60 * 2,
+      sameSite: "strict",
+      path: "/",
+      secure: true,
+    })
   );
 
   return newUser;
@@ -129,12 +137,23 @@ exports.login = requestWrapper(User, async (req, res, user) => {
   // Validate user password and login
 
   if (await bcrypt.compare(password, existingUser.password)) {
-    existingUser.token = jwt.sign(
+    const token = jwt.sign(
       { username, id: existingUser.id },
       process.env.TOKEN_KEY,
       {
         expiresIn: "2h",
       }
+    );
+
+    res.setHeader(
+      "Set-Cookie",
+      cookie.serialize("token", token, {
+        httpOnly: true,
+        maxAge: 60 * 60 * 2,
+        sameSite: "strict",
+        path: "/",
+        secure: true,
+      })
     );
 
     return existingUser;
@@ -206,12 +225,23 @@ exports.update = requestWrapper(User, async (req, res, db) => {
   // Get updated token
 
   if (newUsername) {
-    updatedUser.token = jwt.sign(
+    const token = jwt.sign(
       { newUsername, id: updatedUser.id },
       process.env.TOKEN_KEY,
       {
         expiresIn: "2h",
       }
+    );
+
+    res.setHeader(
+      "Set-Cookie",
+      cookie.serialize("token", token, {
+        httpOnly: true,
+        maxAge: 60 * 60 * 2,
+        sameSite: "strict",
+        path: "/",
+        secure: true,
+      })
     );
   }
 

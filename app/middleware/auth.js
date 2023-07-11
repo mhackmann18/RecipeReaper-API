@@ -1,20 +1,20 @@
 const jwt = require("jsonwebtoken");
+const cookie = require("cookie");
 const { printErrMsg } = require("../utilities/utils");
 
 const config = process.env;
 
 const verifyToken = (checkPrivilegesFn) => (req, res, next) => {
-  const token =
-    req.body.token || req.query.token || req.headers["x-access-token"];
-
-  if (!token) {
-    printErrMsg({ message: "A token is required for authentication" });
-    return res
-      .status(403)
-      .send({ message: "A token is required for authentication" });
-  }
-
   try {
+    const token = req.headers.cookie && cookie.parse(req.headers.cookie).token;
+
+    if (!token) {
+      printErrMsg({ message: "A token is required for authentication" });
+      return res
+        .status(403)
+        .send({ message: "A token is required for authentication" });
+    }
+
     const user = jwt.verify(token, config.TOKEN_KEY);
     req.user = user;
 

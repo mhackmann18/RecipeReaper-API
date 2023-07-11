@@ -11,6 +11,8 @@ const { CORS_ORIGIN, PORT } = process.env;
 
 const corsOptions = {
   origin: `http://localhost:${CORS_ORIGIN}`,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true,
 };
 
 app.use(cors(corsOptions));
