@@ -6,16 +6,17 @@ const config = process.env;
 
 const verifyToken = (checkPrivilegesFn) => (req, res, next) => {
   try {
-    const token = req.headers.cookie && cookie.parse(req.headers.cookie).token;
+    const cookies = req.headers.cookie && cookie.parse(req.headers.cookie);
+    const { access_token } = cookies;
 
-    if (!token) {
-      printErrMsg({ message: "A token is required for authentication" });
-      return res
-        .status(403)
-        .send({ message: "A token is required for authentication" });
+    if (!access_token) {
+      printErrMsg({
+        message: "No access token provided",
+      });
+      return res.status(403).send({ message: "Please login" });
     }
 
-    const user = jwt.verify(token, config.TOKEN_KEY);
+    const user = jwt.verify(access_token, config.ACCESS_TOKEN_KEY);
     req.user = user;
 
     if (

@@ -61,15 +61,16 @@ exports.register = requestWrapper(User, async (req, res, user) => {
 
   const newUser = await user.create({ ...req.body, password: hash });
 
-  const token = jwt.sign({ username, id: newUser.id }, process.env.TOKEN_KEY, {
-    expiresIn: "2h",
-  });
+  const accessToken = jwt.sign(
+    { username, id: newUser.id },
+    process.env.ACCESS_TOKEN_KEY,
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN }
+  );
 
   res.setHeader(
     "Set-Cookie",
-    cookie.serialize("token", token, {
-      httpOnly: true,
-      maxAge: 60 * 60 * 2,
+    cookie.serialize("access_token", accessToken, {
+      maxAge: process.env.ACCESS_TOKEN_EXPIRES_IN,
       sameSite: "strict",
       path: "/",
       secure: true,
@@ -137,19 +138,16 @@ exports.login = requestWrapper(User, async (req, res, user) => {
   // Validate user password and login
 
   if (await bcrypt.compare(password, existingUser.password)) {
-    const token = jwt.sign(
+    const accessToken = jwt.sign(
       { username, id: existingUser.id },
-      process.env.TOKEN_KEY,
-      {
-        expiresIn: "2h",
-      }
+      process.env.ACCESS_TOKEN_KEY,
+      { expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN }
     );
 
     res.setHeader(
       "Set-Cookie",
-      cookie.serialize("token", token, {
-        httpOnly: true,
-        maxAge: 60 * 60 * 2,
+      cookie.serialize("access_token", accessToken, {
+        maxAge: process.env.ACCESS_TOKEN_EXPIRES_IN,
         sameSite: "strict",
         path: "/",
         secure: true,
@@ -226,18 +224,17 @@ exports.update = requestWrapper(User, async (req, res, db) => {
 
   if (newUsername) {
     const token = jwt.sign(
-      { newUsername, id: updatedUser.id },
-      process.env.TOKEN_KEY,
+      { username: newUsername, id: updatedUser.id },
+      process.env.ACCESS_TOKEN_KEY,
       {
-        expiresIn: "2h",
+        expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN,
       }
     );
 
     res.setHeader(
       "Set-Cookie",
-      cookie.serialize("token", token, {
-        httpOnly: true,
-        maxAge: 60 * 60 * 2,
+      cookie.serialize("access_token", token, {
+        maxAge: process.env.ACCESS_TOKEN_EXPIRES_IN,
         sameSite: "strict",
         path: "/",
         secure: true,
