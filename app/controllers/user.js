@@ -64,7 +64,7 @@ exports.register = requestWrapper(User, async (req, res, user) => {
   const accessToken = jwt.sign(
     { username, id: newUser.id },
     process.env.ACCESS_TOKEN_KEY,
-    { expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN }
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN * 1000 }
   );
 
   res.setHeader(
@@ -141,7 +141,7 @@ exports.login = requestWrapper(User, async (req, res, user) => {
     const accessToken = jwt.sign(
       { username, id: existingUser.id },
       process.env.ACCESS_TOKEN_KEY,
-      { expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN }
+      { expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN * 1000 }
     );
 
     res.setHeader(
@@ -227,7 +227,7 @@ exports.update = requestWrapper(User, async (req, res, db) => {
       { username: newUsername, id: updatedUser.id },
       process.env.ACCESS_TOKEN_KEY,
       {
-        expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN,
+        expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN * 1000,
       }
     );
 
