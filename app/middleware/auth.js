@@ -13,7 +13,9 @@ const verifyToken = (checkPrivilegesFn) => (req, res, next) => {
       printErrMsg({
         message: "No access token provided",
       });
-      return res.status(403).send({ message: "Please login" });
+      return res
+        .status(401)
+        .send({ message: "Please login", error: config.NO_TOKEN_ERR });
     }
 
     const user = jwt.verify(access_token, config.ACCESS_TOKEN_KEY);
@@ -24,11 +26,16 @@ const verifyToken = (checkPrivilegesFn) => (req, res, next) => {
       user.username !== process.env.ADMIN_USERNAME
     ) {
       printErrMsg({ message: "Permission denied" });
-      return res.status(403).send({ message: "Permission denied" });
+      return res.status(403).send({
+        message: "Permission denied",
+        error: config.NO_PERMISSION_ERR,
+      });
     }
   } catch (error) {
     printErrMsg(error);
-    return res.status(401).send({ message: "Invalid Token" });
+    return res
+      .status(401)
+      .send({ message: "Invalid Token", error: config.INVALID_TOKEN_ERR });
   }
   return next();
 };
