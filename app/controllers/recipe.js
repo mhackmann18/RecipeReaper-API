@@ -2,6 +2,9 @@
 const Recipe = require("../models/Recipe");
 const { requestWrapper } = require("../utilities/utils");
 
+const config = process.env;
+const { NO_PERMISSION_ERR } = config;
+
 // Create and Save a new recipe
 exports.create = requestWrapper(Recipe, async (req, res, recipe) => {
   // Validate request
@@ -32,7 +35,7 @@ exports.create = requestWrapper(Recipe, async (req, res, recipe) => {
 
   const newRecipe = await recipe.create(req.body);
 
-  return newRecipe;
+  return { data: newRecipe };
 });
 
 // Retrieve all recipes
@@ -45,7 +48,7 @@ exports.findAll = requestWrapper(Recipe, async (req, res, recipe) => {
     recipes = await recipe.findAll();
   }
 
-  return recipes;
+  return { data: recipes };
 });
 
 // Find a single Recipe with an id
@@ -53,13 +56,13 @@ exports.findOne = requestWrapper(Recipe, async (req, res, recipe) => {
   // Validate request
   if (!(await recipe.isOwner(req.params.id, req.user.id))) {
     throw new Error("Permission denied: You are not the owner of this recipe", {
-      cause: { code: 403 },
+      cause: { code: 403, id: NO_PERMISSION_ERR },
     });
   }
 
   const existingRecipe = await recipe.findById(req.params.id);
 
-  return existingRecipe;
+  return { data: existingRecipe };
 });
 
 // Update a Recipe identified by the id in the request
@@ -71,13 +74,13 @@ exports.update = requestWrapper(Recipe, async (req, res, recipe) => {
 
   if (!(await recipe.isOwner(req.params.id, req.user.id))) {
     throw new Error("Permission denied: You are not the owner of this recipe", {
-      cause: { code: 403 },
+      cause: { code: 403, id: NO_PERMISSION_ERR },
     });
   }
 
   const updatedRecipe = await recipe.updateById(req.body, req.params.id);
 
-  return updatedRecipe;
+  return { data: updatedRecipe };
 });
 
 // Delete a Recipe with the specified id in the request
@@ -85,18 +88,18 @@ exports.delete = requestWrapper(Recipe, async (req, res, recipe) => {
   // Validate request
   if (!(await recipe.isOwner(req.params.id, req.user.id))) {
     throw new Error("Permission denied: You are not the owner of this recipe", {
-      cause: { code: 403 },
+      cause: { code: 403, id: NO_PERMISSION_ERR },
     });
   }
 
   const deletedRecipe = await recipe.remove(req.params.id);
 
-  return deletedRecipe;
+  return { data: deletedRecipe };
 });
 
 // Delete all recipes from the database.
 exports.deleteAll = requestWrapper(Recipe, async (req, res, recipe) => {
   const data = await recipe.removeAll();
 
-  return data;
+  return { data };
 });

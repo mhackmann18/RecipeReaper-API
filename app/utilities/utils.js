@@ -15,9 +15,10 @@ exports.requestWrapper = (Model, fn) => async (req, res) => {
     res.send(data);
     this.printSuccessMsg();
   } catch (error) {
-    res
-      .status((error.cause && error.cause.code) || 500)
-      .send({ message: error.message || "An unexpected error occurred" });
+    res.status(error.cause?.code || 500).send({
+      error: error.cause?.id || "generic",
+      message: error.message || "An unexpected error occurred",
+    });
     this.printErrMsg(error);
   } finally {
     user.closeConnection();

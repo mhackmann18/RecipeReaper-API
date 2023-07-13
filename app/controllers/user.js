@@ -10,7 +10,7 @@ const { requestWrapper } = utils;
 exports.getSelf = requestWrapper(User, async (req, res, user) => {
   const existingUser = await user.findById(req.user.id);
 
-  if (existingUser) return existingUser;
+  if (existingUser) return { data: existingUser };
 
   throw new Error(`No user found with id '${req.user.id}'`, {
     cause: { code: 400 },
@@ -77,13 +77,13 @@ exports.register = requestWrapper(User, async (req, res, user) => {
     })
   );
 
-  return newUser;
+  return { data: newUser };
 });
 
 exports.findOne = requestWrapper(User, async (req, res, user) => {
   const existingUser = await user.findById(req.params.id);
 
-  if (existingUser) return existingUser;
+  if (existingUser) return { data: existingUser };
 
   throw new Error(`No user found with id '${req.params.id}'`, {
     cause: { code: 400 },
@@ -93,7 +93,7 @@ exports.findOne = requestWrapper(User, async (req, res, user) => {
 exports.findAll = requestWrapper(User, async (req, res, user) => {
   const users = await user.findAll();
 
-  return users;
+  return { data: users };
 });
 
 exports.login = requestWrapper(User, async (req, res, user) => {
@@ -154,7 +154,7 @@ exports.login = requestWrapper(User, async (req, res, user) => {
       })
     );
 
-    return existingUser;
+    return { data: existingUser };
   }
 
   throw new Error("Incorrect password", { cause: { code: 400 } });
@@ -248,11 +248,11 @@ exports.update = requestWrapper(User, async (req, res, db) => {
     );
   }
 
-  return updatedUser;
+  return { data: updatedUser };
 });
 
 exports.delete = requestWrapper(User, async (req, res, user) => {
   const oldUser = await user.deleteById(req.params.id);
 
-  return oldUser;
+  return { data: oldUser };
 });
