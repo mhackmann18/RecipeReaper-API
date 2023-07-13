@@ -218,7 +218,13 @@ exports.update = requestWrapper(User, async (req, res, db) => {
     newUserData.password = passwordHash;
   }
 
-  const updatedUser = await db.update(newUserData, userId);
+  let updatedUser;
+
+  if (Object.keys(newUserData).length) {
+    updatedUser = await db.update(newUserData, userId);
+  } else {
+    updatedUser = await db.findById(userId);
+  }
 
   // Get updated token
 
