@@ -7,9 +7,8 @@ const config = process.env;
 const verifyToken = (checkPrivilegesFn) => (req, res, next) => {
   try {
     const cookies = req.headers.cookie && cookie.parse(req.headers.cookie);
-    const { access_token } = cookies;
 
-    if (!access_token) {
+    if (!cookies?.access_token) {
       printErrMsg({
         message: "No access token provided",
       });
@@ -18,7 +17,7 @@ const verifyToken = (checkPrivilegesFn) => (req, res, next) => {
         .send({ message: "Please login", error: config.NO_TOKEN_ERR });
     }
 
-    const user = jwt.verify(access_token, config.ACCESS_TOKEN_KEY);
+    const user = jwt.verify(cookies.access_token, config.ACCESS_TOKEN_KEY);
     req.user = user;
 
     if (
