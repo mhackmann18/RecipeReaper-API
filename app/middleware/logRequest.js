@@ -1,9 +1,20 @@
+const jwt = require("jsonwebtoken");
+const cookie = require("cookie");
+
 const logRequest = (req, res, next) => {
-  console.log(
-    `Method: ${req.method.bold}  Endpoint: ${req.url.bold}  User: ${
-      (req.user ? req.user.username : "none").bold
-    }`.yellow
-  );
+  let user;
+  try {
+    const cookies = req.headers?.cookie && cookie.parse(req.headers.cookie);
+    user =
+      cookies?.access_token &&
+      jwt.verify(cookies.access_token, process.env.ACCESS_TOKEN_KEY);
+  } finally {
+    console.log(
+      `Method: ${req.method.bold}  Endpoint: ${req.url.bold}  User: ${
+        (user ? user.username : "none").bold
+      }`.yellow
+    );
+  }
   return next();
 };
 
