@@ -8,10 +8,19 @@ class Recipe {
 
   async create(newRecipe) {
     const recipeTableData = ((recipe) => {
-      const { user_id, title, servings, serving_size, prep_time, cook_time } =
-        recipe;
+      const {
+        user_id,
+        title,
+        servings,
+        serving_size,
+        prep_time,
+        cook_time,
+        original_url,
+      } = recipe;
 
       const recipeData = { user_id, title, servings };
+
+      if (original_url) recipeData.original_url = original_url;
 
       if (serving_size) recipeData.serving_size = serving_size;
 
@@ -195,12 +204,21 @@ class Recipe {
 
   async updateById(recipe, id) {
     const recipeTableData = ((recipe) => {
-      const { user_id, title, servings, serving_size, prep_time, cook_time } =
-        recipe;
+      const {
+        user_id,
+        title,
+        servings,
+        serving_size,
+        prep_time,
+        cook_time,
+        original_url,
+      } = recipe;
 
       const recipeData = {};
 
       if (user_id) recipeData.user_id = user_id;
+
+      if (original_url) recipeData.original_url = original_url;
 
       if (title) recipeData.title = title;
 

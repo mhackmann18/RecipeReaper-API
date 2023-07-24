@@ -25,6 +25,7 @@ exports.create = requestWrapper(Recipe, async (req, res, recipe) => {
         "ingredients",
         "instructions",
         "nutrients",
+        "original_url",
       ].includes(columnName)
     ) {
       throw new Error(`Unexpected property '${columnName}' provided`, {
