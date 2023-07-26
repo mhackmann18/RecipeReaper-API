@@ -1,5 +1,5 @@
 {
-  "name": "prepmaster-api",
+  "name": "recipereaper-api",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
@@ -9,15 +9,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mhackmann18/PrepMaster-API.git"
+    "url": "git+https://github.com/mhackmann18/RecipeReaper-API.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/mhackmann18/PrepMaster-API/issues"
+    "url": "https://github.com/mhackmann18/RecipeReaper-API/issues"
   },
-  "homepage": "https://github.com/mhackmann18/PrepMaster-API#readme",
+  "homepage": "https://github.com/mhackmann18/RecipeReaper-API#readme",
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "colors": "^1.4.0",

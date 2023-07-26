@@ -27,7 +27,7 @@ app.use(logRequest);
 
 // simple route
 app.get("/", (req, res) => {
-  res.json({ message: "Welcome to PrepMaster" });
+  res.json({ message: "Welcome to RecipeReaper" });
 });
 
 require("./app/routes/recipe")(app);
