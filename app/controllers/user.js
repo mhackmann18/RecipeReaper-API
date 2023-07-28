@@ -150,7 +150,8 @@ exports.login = requestWrapper(User, async (req, res, user) => {
         maxAge: process.env.ACCESS_TOKEN_EXPIRES_IN,
         sameSite: "strict",
         path: "/",
-        secure: true,
+        // secure: true,
+        domain: "localhost",
       })
     );
 
