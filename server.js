@@ -7,10 +7,10 @@ const logRequest = require("./app/middleware/logRequest");
 
 const app = express();
 
-const { CORS_ORIGIN, PORT } = process.env;
+const { CORS_ORIGIN } = process.env;
 
 const corsOptions = {
-  origin: `http://localhost:${CORS_ORIGIN}`,
+  origin: `${CORS_ORIGIN}`,
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
 };
@@ -32,6 +32,8 @@ app.get("/", (req, res) => {
 
 require("./app/routes/recipe")(app);
 require("./app/routes/user")(app);
+
+const { PORT } = process.env;
 
 // set port, listen for requests
 app.listen(PORT, () => {
