@@ -3,6 +3,7 @@ require("colors");
 require("dotenv").config({ path: `${__dirname}/config.env` });
 const express = require("express");
 const cors = require("cors");
+const https = require("https");
 const logRequest = require("./app/middleware/logRequest");
 
 const app = express();
@@ -36,6 +37,6 @@ require("./app/routes/user")(app);
 const { PORT } = process.env;
 
 // set port, listen for requests
-app.listen(PORT, () => {
+https.createServer(app).listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });
