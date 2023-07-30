@@ -560,7 +560,7 @@ class Recipe {
   }
 
   closeConnection() {
-    this.#connection.end();
+    this.#connection?.end();
     this.#connection = null;
   }
 }
