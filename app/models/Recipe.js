@@ -4,7 +4,7 @@
 const connectToDB = require("./db");
 
 class Recipe {
-  #connection;
+  #connection; 
 
   async create(newRecipe) {
     const recipeTableData = ((recipe) => {
