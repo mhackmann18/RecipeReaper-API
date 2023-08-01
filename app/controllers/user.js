@@ -7,6 +7,14 @@ require("dotenv").config({ path: `${__dirname}/config.env` });
 
 const { requestWrapper } = utils;
 
+const setCookieOptions = {
+  maxAge: process.env.ACCESS_TOKEN_EXPIRES_IN,
+  sameSite: "none",
+  path: "/",
+  domain: "recipereaper.com",
+  secure: true,
+}
+
 exports.getSelf = requestWrapper(User, async (req, res, user) => {
   const existingUser = await user.findById(req.user.id);
 
@@ -69,12 +77,7 @@ exports.register = requestWrapper(User, async (req, res, user) => {
 
   res.setHeader(
     "Set-Cookie",
-    cookie.serialize("access_token", accessToken, {
-      maxAge: process.env.ACCESS_TOKEN_EXPIRES_IN,
-      sameSite: "strict",
-      path: "/",
-      secure: true,
-    })
+    cookie.serialize("access_token", accessToken, setCookieOptions)
   );
 
   return { data: newUser };
@@ -146,13 +149,7 @@ exports.login = requestWrapper(User, async (req, res, user) => {
 
     res.setHeader(
       "Set-Cookie",
-      cookie.serialize("access_token", accessToken, {
-        maxAge: process.env.ACCESS_TOKEN_EXPIRES_IN,
-        sameSite: "strict",
-        path: "/",
-        // secure: true,
-        domain: "localhost",
-      })
+      cookie.serialize("access_token", accessToken, setCookieOptions)
     );
 
     return { data: existingUser };

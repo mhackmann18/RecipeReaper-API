@@ -4,10 +4,11 @@ require("dotenv").config({ path: `${__dirname}/config.env` });
 const express = require("express");
 const cors = require("cors");
 const https = require("https");
+const fs = require("fs");
 const logRequest = require("./app/middleware/logRequest");
 
 const app = express();
-
+ 
 const { CORS_ORIGIN } = process.env;
 
 const corsOptions = {
@@ -36,7 +37,12 @@ require("./app/routes/user")(app);
 
 const { PORT } = process.env;
 
+const options = {
+  key: fs.readFileSync('/etc/pki/tls/private/rrapi-tls.key'),
+  cert: fs.readFileSync('/etc/pki/tls/certs/api_recipereaper_com.crt'),
+}
+
 // set port, listen for requests
-https.createServer(app).listen(PORT, () => {
+https.createServer(options, app).listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });
