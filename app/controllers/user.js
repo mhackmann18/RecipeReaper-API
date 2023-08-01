@@ -13,7 +13,7 @@ const setCookieOptions = {
   path: "/",
   domain: "recipereaper.com",
   secure: true,
-}
+};
 
 exports.getSelf = requestWrapper(User, async (req, res, user) => {
   const existingUser = await user.findById(req.user.id);

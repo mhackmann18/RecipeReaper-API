@@ -8,7 +8,7 @@ const fs = require("fs");
 const logRequest = require("./app/middleware/logRequest");
 
 const app = express();
- 
+
 const { CORS_ORIGIN } = process.env;
 
 const corsOptions = {
@@ -38,9 +38,9 @@ require("./app/routes/user")(app);
 const { PORT } = process.env;
 
 const options = {
-  key: fs.readFileSync('/etc/pki/tls/private/rrapi-tls.key'),
-  cert: fs.readFileSync('/etc/pki/tls/certs/api_recipereaper_com.crt'),
-}
+  key: fs.readFileSync("/etc/pki/tls/private/rrapi-tls.key"),
+  cert: fs.readFileSync("/etc/pki/tls/certs/api_recipereaper_com.crt"),
+};
 
 // set port, listen for requests
 https.createServer(options, app).listen(PORT, () => {
