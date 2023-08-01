@@ -35,14 +35,19 @@ app.get("/", (req, res) => {
 require("./app/routes/recipe")(app);
 require("./app/routes/user")(app);
 
-const { PORT } = process.env;
+const { PORT, NODE_ENV } = process.env;
 
-const options = {
-  key: fs.readFileSync("/etc/pki/tls/private/rrapi-tls.key"),
-  cert: fs.readFileSync("/etc/pki/tls/certs/api_recipereaper_com.crt"),
-};
+if (NODE_ENV === "production") {
+  const options = {
+    key: fs.readFileSync("/etc/pki/tls/private/rrapi-tls.key"),
+    cert: fs.readFileSync("/etc/pki/tls/certs/api_recipereaper_com.crt"),
+  };
 
-// set port, listen for requests
-https.createServer(options, app).listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}.`);
-});
+  https.createServer(options, app).listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}.`);
+  });
+} else if (NODE_ENV === "development") {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}.`);
+  });
+}

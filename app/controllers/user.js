@@ -9,10 +9,12 @@ const { requestWrapper } = utils;
 
 const setCookieOptions = {
   maxAge: process.env.ACCESS_TOKEN_EXPIRES_IN,
-  sameSite: "none",
   path: "/",
-  domain: "recipereaper.com",
-  secure: true,
+  ...(process.env.NODE_ENV === "production" && {
+    sameSite: "none",
+    domain: "recipereaper.com",
+    secure: true,
+  }),
 };
 
 exports.getSelf = requestWrapper(User, async (req, res, user) => {
