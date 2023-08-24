@@ -1,1 +1,3 @@
-# This repository has been consolidated into the RecipeReaper repo under /api
+# This repository is outdated
+
+The repositories recipereaper-site, recipereaper-api, and recipe-scraper have been consolidated into the RecipeReaper repository.
