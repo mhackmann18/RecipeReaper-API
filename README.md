@@ -1,3 +1,3 @@
-# This repository is outdated
+# Repository moved
 
-The repositories recipereaper-site, recipereaper-api, and recipe-scraper have been consolidated into the RecipeReaper repository.
+This repository has been consolidated into mhackmann18/RecipeReaper
